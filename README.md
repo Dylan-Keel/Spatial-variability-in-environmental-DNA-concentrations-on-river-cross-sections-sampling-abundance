@@ -10,7 +10,7 @@ All metadata compiled and annotated using The MetadataWizard by USGS Fort Collin
 # Contribute
 Please contact the corresponding authors of the paper for information about this repository or about collaborating on future work.
 
-#Code References
+# Code References
 H. Rue, S. Martino, and N. Chopin. (2009). Approximate Bayesian inference for latent Gaussian models using integrated nested Laplace approximations (with discussion). Journal of the Royal Statistical Society, Series B,71(2):319{392}
 
 Zuur, A. F., Ieno, E. N., Walker, N., Saveliev, A. A., & Smith, G. M. (2009). Mixed effects models and extensions in ecology with R. Springer New York. https://doi.org/10.1007/978-0-387-87458-6
