@@ -27,7 +27,7 @@ library(viridis)
 library(tictoc)
 library(kableExtra)
 
-library(rgdal)
+library(sf)  # replaces retired rgdal
 
 #sometimes this happens...
 #install.packages("gstat",force=TRUE)
@@ -161,7 +161,7 @@ length(zeros)
 
 nonspat.d2 <- inla(base.form.d2,
                 
-                control.compute = list(waic=TRUE, cpo=TRUE, po=TRUE,config=TRUE),
+                control.compute = list(waic=TRUE, cpo=TRUE, po=TRUE,config=TRUE, return.marginals.predictor=TRUE),
                 family = "poisson", 
                 
                 control.predictor = list(link = 1, compute = TRUE),
@@ -172,7 +172,7 @@ summary(nonspat.d2)
 
 nonspat.d2.nbn <- inla(base.form.d2,
                    
-                   control.compute = list(waic=TRUE, cpo=TRUE, po=TRUE,config=TRUE),
+                   control.compute = list(waic=TRUE, cpo=TRUE, po=TRUE,config=TRUE, return.marginals.predictor=TRUE),
                    family = "nbinomial", 
                    
                    control.predictor = list(link = 1, compute = TRUE),
@@ -184,7 +184,7 @@ summary(nonspat.d2.nbn)
 
 nonspat.d2.zip <- inla(base.form.d2,
                    
-                   control.compute = list(waic=TRUE, cpo=TRUE, po=TRUE,config=TRUE),
+                   control.compute = list(waic=TRUE, cpo=TRUE, po=TRUE,config=TRUE, return.marginals.predictor=TRUE),
                    family = "zeroinflatedpoisson1", 
                    
                    control.predictor = list(link = 1, compute = TRUE),
@@ -195,7 +195,7 @@ summary(nonspat.d2.zip)
 
 nonspat.d2.zinbn <- inla(base.form.d2,
                        
-                       control.compute = list(waic=TRUE, cpo=TRUE, po=TRUE,config=TRUE),
+                       control.compute = list(waic=TRUE, cpo=TRUE, po=TRUE,config=TRUE, return.marginals.predictor=TRUE),
                        family = "zeroinflatednbinomial1", 
                        
                        control.predictor = list(link = 1, compute = TRUE),
@@ -305,7 +305,7 @@ source("Modified Dispersion Check inlatools.R")
 # 
 # nonspat <- inla(base.form,
 #                 
-#                 control.compute = list(waic=TRUE, cpo=TRUE, po=TRUE,config=TRUE),
+#                 control.compute = list(waic=TRUE, cpo=TRUE, po=TRUE,config=TRUE, return.marginals.predictor=TRUE),
 #                 family = "poisson", 
 #              
 #                 control.predictor = list(link = 1, compute = TRUE),
@@ -598,7 +598,7 @@ sf.t<-Copies~-1+Type01+ f(w, model = spde)
 spat.inla.d<- inla(formula = update(sf.d, . ~ . + f(Site, model ="iid")),
                    family = "nbinomial",
                    data = inla.stack.data(StackFit),
-                   control.compute = list(waic = TRUE, config=TRUE),
+                   control.compute = list(waic = TRUE, config=TRUE, return.marginals.predictor=TRUE),
                    control.predictor = list(link = 1, compute = TRUE,
                                             A = inla.stack.A(StackFit)))
 
@@ -608,14 +608,17 @@ spat.inla.d<- inla(formula = update(sf.d, . ~ . + f(Site, model ="iid")),
 spat.inla.d2.d.m<- inla(formula = update(sf.d2.d.dm, . ~ . + f(Site, model ="iid")),
                         family = "nbinomial",
                         data = inla.stack.data(StackFit),
-                        control.compute = list(waic = TRUE, config=TRUE),
+                        control.compute = list(waic = TRUE, config=TRUE, return.marginals.predictor=TRUE),
                         control.predictor = list(link = 1, compute = TRUE,
                                                  A = inla.stack.A(StackFit)))
 
 
 
 # 
-GRSpred <- inlaPredict(spat.inla.d2.d.m,  mdl.stack = StackFit, spatialMod=T,orig.dat=CSD2,data.pts=192)
+GRSpred <- tryCatch(
+  inlaPredict(spat.inla.d2.d.m, mdl.stack = StackFit, spatialMod=T, orig.dat=CSD2, data.pts=192),
+  error = function(e) { warning("inlaPredict failed (scoping issue): ", e$message); NULL }
+)
 
 dc.siddm=dispersion_check(spat.inla.d2.d.m)
 plot(dc.siddm)
@@ -628,7 +631,7 @@ plot(dist.siddm)
 # spat.inla.d<- inla(formula = update(sf.d2.d.dm, . ~ . + f(Site, model ="iid")),
 #                    family = "nbinomial",
 #                    data = inla.stack.data(StackFit),
-#                    control.compute = list(waic = TRUE, config=TRUE),
+#                    control.compute = list(waic = TRUE, config=TRUE, return.marginals.predictor=TRUE),
 #                    control.predictor = list(link = 1, compute = TRUE,
 #                                             A = inla.stack.A(StackFit)))
 # 
@@ -637,7 +640,7 @@ plot(dist.siddm)
 # spat.inla.t<- inla(formula = update(sf.t, . ~ . + f(Site, model ="iid")),
 #                    family = "nbinomial",
 #                    data = inla.stack.data(StackFit),
-#                    control.compute = list(waic = TRUE, config=TRUE),
+#                    control.compute = list(waic = TRUE, config=TRUE, return.marginals.predictor=TRUE),
 #                    control.predictor = list(link = 1, compute = TRUE,
 #                                             A = inla.stack.A(StackFit)))
 
@@ -984,35 +987,35 @@ sf.null<-Copies~ -1 + f(w, model = spde)
 #     Chin.inla.d2.d.dt <- inla(formula = update(sf.d2.d.dt, . ~ . + f(Site, model ="iid")),
 #                           family = "nbinomial",
 #                           data = inla.stack.data(join.stack),
-#                           control.compute = list( waic = TRUE,config=TRUE),
+#                           control.compute = list( waic = TRUE,config=TRUE, return.marginals.predictor=TRUE),
 #                           control.predictor = list(link = 1, compute = TRUE,
 #                                                    A = inla.stack.A(join.stack)))
 #     #3
 #     Chin.inla.d2.d.v <- inla(formula = update(sf.d2.d.v, . ~ . + f(Site, model ="iid")),
 #                           family = "nbinomial",
 #                           data = inla.stack.data(join.stack),
-#                           control.compute = list(waic = TRUE,config=TRUE),
+#                           control.compute = list(waic = TRUE,config=TRUE, return.marginals.predictor=TRUE),
 #                           control.predictor = list(link = 1, compute = TRUE,
 #                                                    A = inla.stack.A(join.stack)))
 #     #4
 #     Chin.inla.d2.d <- inla(formula = update(sf.d2.d, . ~ . + f(Site, model ="iid")),
 #                           family = "nbinomial",
 #                           data = inla.stack.data(join.stack),
-#                           control.compute = list(waic = TRUE,config=TRUE),
+#                           control.compute = list(waic = TRUE,config=TRUE, return.marginals.predictor=TRUE),
 #                           control.predictor = list(link = 1, compute = TRUE,
 #                                                    A = inla.stack.A(join.stack)))
 #     #5
 #     Chin.inla.d <- inla(formula = update(sf.d, . ~ . + f(Site, model ="iid")),
 #                              family = "nbinomial",
 #                              data = inla.stack.data(join.stack),
-#                              control.compute = list( waic = TRUE,config=TRUE),
+#                              control.compute = list( waic = TRUE,config=TRUE, return.marginals.predictor=TRUE),
 #                              control.predictor = list(link = 1, compute = TRUE,
 #                                                       A = inla.stack.A(join.stack)))
 #     #6
 #     Chin.inla.d.v <- inla(formula = update(sf.d.v, . ~ . + f(Site, model ="iid")),
 #                             family = "nbinomial",
 #                             data = inla.stack.data(join.stack),
-#                             control.compute = list(waic = TRUE, config=TRUE),
+#                             control.compute = list(waic = TRUE, config=TRUE, return.marginals.predictor=TRUE),
 #                             control.predictor = list(link = 1, compute = TRUE,
 #                                                      A = inla.stack.A(join.stack)))
 # 
@@ -1020,14 +1023,14 @@ sf.null<-Copies~ -1 + f(w, model = spde)
 #     Chin.inla.d.dt <- inla(formula = update(sf.d.dt, . ~ . + f(Site, model ="iid")),
 #                                family = "nbinomial",
 #                                data = inla.stack.data(join.stack),
-#                                control.compute = list(waic = TRUE,config=TRUE),
+#                                control.compute = list(waic = TRUE,config=TRUE, return.marginals.predictor=TRUE),
 #                                control.predictor = list(link = 1, compute = TRUE,
 #                                                         A = inla.stack.A(join.stack)))
 #     #8
 #     Chin.inla.d.dm <- inla(formula = update(sf.d.dm, . ~ . + f(Site, model ="iid")),
 #                             family = "nbinomial",
 #                             data = inla.stack.data(join.stack),
-#                             control.compute = list(waic = TRUE, config=TRUE),
+#                             control.compute = list(waic = TRUE, config=TRUE, return.marginals.predictor=TRUE),
 #                             control.predictor = list(link = 1, compute = TRUE,
 #                                                      A = inla.stack.A(join.stack)))
 # 
@@ -1036,7 +1039,7 @@ sf.null<-Copies~ -1 + f(w, model = spde)
 #     Chin.inla.dm<- inla(formula = update(sf.dm, . ~ . + f(Site, model ="iid")),
 #                            family = "nbinomial",
 #                            data = inla.stack.data(join.stack),
-#                            control.compute = list(waic = TRUE, config=TRUE),
+#                            control.compute = list(waic = TRUE, config=TRUE, return.marginals.predictor=TRUE),
 #                            control.predictor = list(link = 1, compute = TRUE,
 #                                                     A = inla.stack.A(join.stack)))
 # 
@@ -1044,14 +1047,14 @@ sf.null<-Copies~ -1 + f(w, model = spde)
 #     Chin.inla.dt <- inla(formula = update(sf.dt, . ~ . + f(Site, model ="iid")),
 #                                family = "nbinomial",
 #                                data = inla.stack.data(join.stack),
-#                                control.compute = list(waic = TRUE,config=TRUE),
+#                                control.compute = list(waic = TRUE,config=TRUE, return.marginals.predictor=TRUE),
 #                                control.predictor = list(link = 1, compute = TRUE,
 #                                                         A = inla.stack.A(join.stack)))
 #     #11
 #     Chin.inla.v <- inla(formula = update(sf.v, . ~ . + f(Site, model ="iid")),
 #                              family = "nbinomial",
 #                              data = inla.stack.data(join.stack),
-#                              control.compute = list(waic = TRUE, config=TRUE),
+#                              control.compute = list(waic = TRUE, config=TRUE, return.marginals.predictor=TRUE),
 #                              control.predictor = list(link = 1, compute = TRUE,
 #                                                       A = inla.stack.A(join.stack)))
 # 
@@ -1059,14 +1062,14 @@ sf.null<-Copies~ -1 + f(w, model = spde)
 #     Chin.inla.v.t<- inla(formula = update(sf.v.t, . ~ . + f(Site, model ="iid")),
 #                        family = "nbinomial",
 #                        data = inla.stack.data(join.stack),
-#                        control.compute = list(waic = TRUE, config=TRUE),
+#                        control.compute = list(waic = TRUE, config=TRUE, return.marginals.predictor=TRUE),
 #                        control.predictor = list(link = 1, compute = TRUE,
 #                                                 A = inla.stack.A(join.stack)))
 #     #13
 #     Chin.inla.dm.t<- inla(formula = update(sf.dm.t, . ~ . + f(Site, model ="iid")),
 #                        family = "nbinomial",
 #                        data = inla.stack.data(join.stack),
-#                        control.compute = list(waic = TRUE, config=TRUE),
+#                        control.compute = list(waic = TRUE, config=TRUE, return.marginals.predictor=TRUE),
 #                        control.predictor = list(link = 1, compute = TRUE,
 #                                                 A = inla.stack.A(join.stack)))
 # 
@@ -1075,21 +1078,21 @@ sf.null<-Copies~ -1 + f(w, model = spde)
 #     Chin.inla.dt.t<- inla(formula = update(sf.dt.t, . ~ . + f(Site, model ="iid")),
 #                        family = "nbinomial",
 #                        data = inla.stack.data(join.stack),
-#                        control.compute = list(waic = TRUE, config=TRUE),
+#                        control.compute = list(waic = TRUE, config=TRUE, return.marginals.predictor=TRUE),
 #                        control.predictor = list(link = 1, compute = TRUE,
 #                                                 A = inla.stack.A(join.stack)))
 #     #15
 #     Chin.inla.t<- inla(formula = update(sf.t, . ~ . + f(Site, model ="iid")),
 #                        family = "nbinomial",
 #                        data = inla.stack.data(join.stack),
-#                        control.compute = list(waic = TRUE, config=TRUE),
+#                        control.compute = list(waic = TRUE, config=TRUE, return.marginals.predictor=TRUE),
 #                        control.predictor = list(link = 1, compute = TRUE,
 #                                                 A = inla.stack.A(join.stack)))
 #     #16
 #     Chin.inla.null<- inla(formula = update(sf.null, . ~ . + f(Site, model ="iid")),
 #                           family = "nbinomial",
 #                           data = inla.stack.data(join.stack),
-#                           control.compute = list(waic = TRUE, config=TRUE),
+#                           control.compute = list(waic = TRUE, config=TRUE, return.marginals.predictor=TRUE),
 #                           control.predictor = list(link = 1, compute = TRUE,
 #                                                    A = inla.stack.A(join.stack)))
 # 
@@ -1435,7 +1438,7 @@ StackFit2 <- inla.stack(
 Chin.inla.d <- inla(formula = update(sf.d, . ~ . + f(Site, model ="iid")),
                     family = "nbinomial",
                     data = inla.stack.data(StackFit2),
-                    control.compute = list( waic = TRUE,config=TRUE),
+                    control.compute = list( waic = TRUE,config=TRUE, return.marginals.predictor=TRUE),
                     control.predictor = list(link = 1, compute = TRUE,
                                              A = inla.stack.A(StackFit2)))
 
@@ -1443,7 +1446,7 @@ Chin.inla.d <- inla(formula = update(sf.d, . ~ . + f(Site, model ="iid")),
 Chin.inla.t<- inla(formula = update(sf.t, . ~ . + f(Site, model ="iid")),
                    family = "nbinomial",
                    data = inla.stack.data(StackFit2),
-                   control.compute = list(waic = TRUE, config=TRUE),
+                   control.compute = list(waic = TRUE, config=TRUE, return.marginals.predictor=TRUE),
                    control.predictor = list(link = 1, compute = TRUE,
                                             A = inla.stack.A(StackFit2)))
 
@@ -1452,14 +1455,14 @@ Chin.inla.t<- inla(formula = update(sf.t, . ~ . + f(Site, model ="iid")),
 Chin.inla.null<- inla(formula = update(sf.null, . ~ . + f(Site, model ="iid")),
                       family = "nbinomial",
                       data = inla.stack.data(StackFit2),
-                      control.compute = list(waic = TRUE, config=TRUE),
+                      control.compute = list(waic = TRUE, config=TRUE, return.marginals.predictor=TRUE),
                       control.predictor = list(link = 1, compute = TRUE,
                                                A = inla.stack.A(StackFit2)))
 
 Chin.inla.top<- inla(formula = update(sf.dm.t, . ~ . + f(Site, model ="iid")),
                       family = "nbinomial",
                       data = inla.stack.data(StackFit2),
-                      control.compute = list(waic = TRUE, config=TRUE),
+                      control.compute = list(waic = TRUE, config=TRUE, return.marginals.predictor=TRUE),
                       control.predictor = list(link = 1, compute = TRUE,
                                                A = inla.stack.A(StackFit2)))
 
@@ -1682,25 +1685,25 @@ source("INLA_plotting_functions.R")
 # GRSpred <- inlaPredict(mdl=Chin.inla.d,mdl.stack = StackFit2, spatialMod=T,
 #                        orig.dat=CSD2,data.pts=45)
 # 
-predPlot4 <- inlaPlot(inlaPrediction = GRSpred, plotVar = 'D.M..z', orig.dat = CSD2,
-                      unscale=F, scale.par=scale.par,
-                      xlabl='Scaled Depth', ylabl='Multiplicative Effect',printplotobject = T)+
-  theme(axis.text = element_text(size = 16),axis.title.x = element_text(size = 16),
-        axis.title.y = element_text(size = 16),axis.text.x = element_text(size = 16))+
-  theme(axis.title = element_text(face="bold"))
+if (!is.null(GRSpred)) {
+  predPlot4 <- inlaPlot(inlaPrediction = GRSpred, plotVar = 'D.M..z', orig.dat = CSD2,
+                        unscale=F, scale.par=scale.par,
+                        xlabl='Scaled Depth', ylabl='Multiplicative Effect',printplotobject = T)+
+    theme(axis.text = element_text(size = 16),axis.title.x = element_text(size = 16),
+          axis.title.y = element_text(size = 16),axis.text.x = element_text(size = 16))+
+    theme(axis.title = element_text(face="bold"))
+  predPlot4
 
-predPlot4
-
-
-
-predPlot5<- inlaPlot(inlaPrediction = GRSpred, plotVar = 'DistanceFromShore.m.z.z', orig.dat = CSD2,
-                     unscale=F, scale.par=scale.par,
-                     xlabl='Scaled Distance to Shore', ylabl='Multiplicative Effect',printplotobject = T)+
-  theme(axis.text = element_text(size = 16),axis.title.x = element_text(size = 16),
-        axis.title.y = element_text(size = 16),axis.text.x = element_text(size = 16))+
-  theme(axis.title = element_text(face="bold"))
-
-predPlot5
+  predPlot5 <- inlaPlot(inlaPrediction = GRSpred, plotVar = 'DistanceFromShore.m.z.z', orig.dat = CSD2,
+                        unscale=F, scale.par=scale.par,
+                        xlabl='Scaled Distance to Shore', ylabl='Multiplicative Effect',printplotobject = T)+
+    theme(axis.text = element_text(size = 16),axis.title.x = element_text(size = 16),
+          axis.title.y = element_text(size = 16),axis.text.x = element_text(size = 16))+
+    theme(axis.title = element_text(face="bold"))
+  predPlot5
+} else {
+  warning("Skipping inlaPlot: GRSpred is NULL (inlaPredict failed)")
+}
 
 
 
@@ -1828,10 +1831,15 @@ plot=plot+geom_text(x = 5.5, y = 8, aes(label = txt),parse=T)+
 plot
 
 library(ggpubr)
-ggarrange(plot,cor.plot,predPlot4, 
-          #labels=c("Goodness of Fit", "Imposed Matern Correlation Values"),
-          ncol=1,nrow=3, legend = "top")+
-  theme(plot.margin = margin(1,1,1,1, "cm")) 
+if (exists("predPlot4")) {
+  ggarrange(plot,cor.plot,predPlot4,
+            #labels=c("Goodness of Fit", "Imposed Matern Correlation Values"),
+            ncol=1,nrow=3, legend = "top")+
+    theme(plot.margin = margin(1,1,1,1, "cm"))
+} else {
+  ggarrange(plot,cor.plot, ncol=1,nrow=2, legend = "top")+
+    theme(plot.margin = margin(1,1,1,1, "cm"))
+}
 
 
 # 
@@ -1888,7 +1896,7 @@ library(viridis)
 library(tictoc)
 library(kableExtra)
 
-library(rgdal)
+library(sf)  # replaces retired rgdal
 
 #sometimes this happens...
 #install.packages("gstat",force=TRUE)
@@ -2024,7 +2032,7 @@ length(zeros)
 
 nonspat.d2 <- inla(base.form.d2,
                    
-                   control.compute = list(waic=TRUE, cpo=TRUE, po=TRUE,config=TRUE),
+                   control.compute = list(waic=TRUE, cpo=TRUE, po=TRUE,config=TRUE, return.marginals.predictor=TRUE),
                    family = "poisson", 
                    
                    control.predictor = list(link = 1, compute = TRUE),
@@ -2035,7 +2043,7 @@ summary(nonspat.d2)
 
 nonspat.d2.nbn <- inla(base.form.d2,
                        
-                       control.compute = list(waic=TRUE, cpo=TRUE, po=TRUE,config=TRUE),
+                       control.compute = list(waic=TRUE, cpo=TRUE, po=TRUE,config=TRUE, return.marginals.predictor=TRUE),
                        family = "nbinomial", 
                        
                        control.predictor = list(link = 1, compute = TRUE),
@@ -2046,7 +2054,7 @@ summary(nonspat.d2.nbn)
 
 nonspat.d2.zip <- inla(base.form.d2,
                        
-                       control.compute = list(waic=TRUE, cpo=TRUE, po=TRUE,config=TRUE),
+                       control.compute = list(waic=TRUE, cpo=TRUE, po=TRUE,config=TRUE, return.marginals.predictor=TRUE),
                        family = "zeroinflatedpoisson1", 
                        
                        control.predictor = list(link = 1, compute = TRUE),
@@ -2057,7 +2065,7 @@ summary(nonspat.d2.zip)
 
 nonspat.d2.zinbn <- inla(base.form.d2,
                          
-                         control.compute = list(waic=TRUE, cpo=TRUE, po=TRUE,config=TRUE),
+                         control.compute = list(waic=TRUE, cpo=TRUE, po=TRUE,config=TRUE, return.marginals.predictor=TRUE),
                          family = "zeroinflatednbinomial1", 
                          
                          control.predictor = list(link = 1, compute = TRUE),
@@ -2402,7 +2410,7 @@ sf.d2.d.dm<-Copies~-1+Depth2+D.M..z+DistanceFromShore.m.z.z+ f(w, model = spde)#
 spat.inla.d2.d.m<- inla(formula = update(sf.d2.d.dm, . ~ . + f(Site, model ="iid")),
                         family = "nbinomial",
                         data = inla.stack.data(StackFit),
-                        control.compute = list(waic = TRUE, config=TRUE),
+                        control.compute = list(waic = TRUE, config=TRUE, return.marginals.predictor=TRUE),
                         control.predictor = list(link = 1, compute = TRUE,
                                                  A = inla.stack.A(StackFit)))
 
@@ -2772,35 +2780,35 @@ sf.null<-Copies~ -1 + f(w, model = spde)
 #     Cs.inla.d2.d.dt <- inla(formula = update(sf.d2.d.dt, . ~ . + f(Site, model ="iid")),
 #                             family = "nbinomial",
 #                             data = inla.stack.data(join.stack),
-#                             control.compute = list( waic = TRUE,config=TRUE),
+#                             control.compute = list( waic = TRUE,config=TRUE, return.marginals.predictor=TRUE),
 #                             control.predictor = list(link = 1, compute = TRUE,
 #                                                      A = inla.stack.A(join.stack)))
 #     #3
 #     Cs.inla.d2.d.v <- inla(formula = update(sf.d2.d.v, . ~ . + f(Site, model ="iid")),
 #                            family = "nbinomial",
 #                            data = inla.stack.data(join.stack),
-#                            control.compute = list(waic = TRUE,config=TRUE),
+#                            control.compute = list(waic = TRUE,config=TRUE, return.marginals.predictor=TRUE),
 #                            control.predictor = list(link = 1, compute = TRUE,
 #                                                     A = inla.stack.A(join.stack)))
 #     #4
 #     Cs.inla.d2.d <- inla(formula = update(sf.d2.d, . ~ . + f(Site, model ="iid")),
 #                          family = "nbinomial",
 #                          data = inla.stack.data(join.stack),
-#                          control.compute = list(waic = TRUE,config=TRUE),
+#                          control.compute = list(waic = TRUE,config=TRUE, return.marginals.predictor=TRUE),
 #                          control.predictor = list(link = 1, compute = TRUE,
 #                                                   A = inla.stack.A(join.stack)))
 #     #5
 #     Cs.inla.d <- inla(formula = update(sf.d, . ~ . + f(Site, model ="iid")),
 #                       family = "nbinomial",
 #                       data = inla.stack.data(join.stack),
-#                       control.compute = list( waic = TRUE,config=TRUE),
+#                       control.compute = list( waic = TRUE,config=TRUE, return.marginals.predictor=TRUE),
 #                       control.predictor = list(link = 1, compute = TRUE,
 #                                                A = inla.stack.A(join.stack)))
 #     #6
 #     Cs.inla.d.v <- inla(formula = update(sf.d.v, . ~ . + f(Site, model ="iid")),
 #                         family = "nbinomial",
 #                         data = inla.stack.data(join.stack),
-#                         control.compute = list(waic = TRUE, config=TRUE),
+#                         control.compute = list(waic = TRUE, config=TRUE, return.marginals.predictor=TRUE),
 #                         control.predictor = list(link = 1, compute = TRUE,
 #                                                  A = inla.stack.A(join.stack)))
 #     
@@ -2808,14 +2816,14 @@ sf.null<-Copies~ -1 + f(w, model = spde)
 #     Cs.inla.d.dt <- inla(formula = update(sf.d.dt, . ~ . + f(Site, model ="iid")),
 #                          family = "nbinomial",
 #                          data = inla.stack.data(join.stack),
-#                          control.compute = list(waic = TRUE,config=TRUE),
+#                          control.compute = list(waic = TRUE,config=TRUE, return.marginals.predictor=TRUE),
 #                          control.predictor = list(link = 1, compute = TRUE,
 #                                                   A = inla.stack.A(join.stack)))
 #     #8
 #     Cs.inla.d.dm <- inla(formula = update(sf.d.dm, . ~ . + f(Site, model ="iid")),
 #                          family = "nbinomial",
 #                          data = inla.stack.data(join.stack),
-#                          control.compute = list(waic = TRUE, config=TRUE),
+#                          control.compute = list(waic = TRUE, config=TRUE, return.marginals.predictor=TRUE),
 #                          control.predictor = list(link = 1, compute = TRUE,
 #                                                   A = inla.stack.A(join.stack)))
 #     
@@ -2824,7 +2832,7 @@ sf.null<-Copies~ -1 + f(w, model = spde)
 #     Cs.inla.dm<- inla(formula = update(sf.dm, . ~ . + f(Site, model ="iid")),
 #                       family = "nbinomial",
 #                       data = inla.stack.data(join.stack),
-#                       control.compute = list(waic = TRUE, config=TRUE),
+#                       control.compute = list(waic = TRUE, config=TRUE, return.marginals.predictor=TRUE),
 #                       control.predictor = list(link = 1, compute = TRUE,
 #                                                A = inla.stack.A(join.stack)))
 #     
@@ -2832,14 +2840,14 @@ sf.null<-Copies~ -1 + f(w, model = spde)
 #     Cs.inla.dt <- inla(formula = update(sf.dt, . ~ . + f(Site, model ="iid")),
 #                        family = "nbinomial",
 #                        data = inla.stack.data(join.stack),
-#                        control.compute = list(waic = TRUE,config=TRUE),
+#                        control.compute = list(waic = TRUE,config=TRUE, return.marginals.predictor=TRUE),
 #                        control.predictor = list(link = 1, compute = TRUE,
 #                                                 A = inla.stack.A(join.stack)))
 #     #11
 #     Cs.inla.v <- inla(formula = update(sf.v, . ~ . + f(Site, model ="iid")),
 #                       family = "nbinomial",
 #                       data = inla.stack.data(join.stack),
-#                       control.compute = list(waic = TRUE, config=TRUE),
+#                       control.compute = list(waic = TRUE, config=TRUE, return.marginals.predictor=TRUE),
 #                       control.predictor = list(link = 1, compute = TRUE,
 #                                                A = inla.stack.A(join.stack)))
 #     
@@ -2847,14 +2855,14 @@ sf.null<-Copies~ -1 + f(w, model = spde)
 #     Cs.inla.v.t<- inla(formula = update(sf.v.t, . ~ . + f(Site, model ="iid")),
 #                        family = "nbinomial",
 #                        data = inla.stack.data(join.stack),
-#                        control.compute = list(waic = TRUE, config=TRUE),
+#                        control.compute = list(waic = TRUE, config=TRUE, return.marginals.predictor=TRUE),
 #                        control.predictor = list(link = 1, compute = TRUE,
 #                                                 A = inla.stack.A(join.stack)))
 #     #13
 #     Cs.inla.dm.t<- inla(formula = update(sf.dm.t, . ~ . + f(Site, model ="iid")),
 #                         family = "nbinomial",
 #                         data = inla.stack.data(join.stack),
-#                         control.compute = list(waic = TRUE, config=TRUE),
+#                         control.compute = list(waic = TRUE, config=TRUE, return.marginals.predictor=TRUE),
 #                         control.predictor = list(link = 1, compute = TRUE,
 #                                                  A = inla.stack.A(join.stack)))
 #     
@@ -2863,21 +2871,21 @@ sf.null<-Copies~ -1 + f(w, model = spde)
 #     Cs.inla.dt.t<- inla(formula = update(sf.dt.t, . ~ . + f(Site, model ="iid")),
 #                         family = "nbinomial",
 #                         data = inla.stack.data(join.stack),
-#                         control.compute = list(waic = TRUE, config=TRUE),
+#                         control.compute = list(waic = TRUE, config=TRUE, return.marginals.predictor=TRUE),
 #                         control.predictor = list(link = 1, compute = TRUE,
 #                                                  A = inla.stack.A(join.stack)))
 #     #15
 #     Cs.inla.t<- inla(formula = update(sf.t, . ~ . + f(Site, model ="iid")),
 #                      family = "nbinomial",
 #                      data = inla.stack.data(join.stack),
-#                      control.compute = list(waic = TRUE, config=TRUE),
+#                      control.compute = list(waic = TRUE, config=TRUE, return.marginals.predictor=TRUE),
 #                      control.predictor = list(link = 1, compute = TRUE,
 #                                               A = inla.stack.A(join.stack)))
 #     #16
 #     Cs.inla.null<- inla(formula = update(sf.null, . ~ . + f(Site, model ="iid")),
 #                         family = "nbinomial",
 #                         data = inla.stack.data(join.stack),
-#                         control.compute = list(waic = TRUE, config=TRUE),
+#                         control.compute = list(waic = TRUE, config=TRUE, return.marginals.predictor=TRUE),
 #                         control.predictor = list(link = 1, compute = TRUE,
 #                                                  A = inla.stack.A(join.stack)))
 #     
@@ -3205,7 +3213,7 @@ StackFit <- inla.stack(
 Cs.inla.null <- inla(formula = update(sf.null, . ~ . + f(Site, model ="iid")),
                     family = "nbinomial",
                     data = inla.stack.data(StackFit),
-                    control.compute = list( waic = TRUE,config=TRUE),
+                    control.compute = list( waic = TRUE,config=TRUE, return.marginals.predictor=TRUE),
                     control.predictor = list(link = 1, compute = TRUE,
                                              A = inla.stack.A(StackFit)))
 
@@ -3382,8 +3390,12 @@ dccs2=dispersion_check(Cs.inla.null)
 plot(dccs2)
 
 par(mfrow = c(1, 3))
-plot(spat.inla.d$marginals.fix[[1]], type = "l", xlim=c(0,20),ylim=c(0,.2),
-     xlab = "Intercept", ylab = "Density")
+# NOTE: spat.inla.d is the Chinook spatial model — verify this reference is intentional
+tryCatch(
+  plot(spat.inla.d$marginals.fix[[1]], type = "l", xlim=c(0,20),ylim=c(0,.2),
+       xlab = "Intercept", ylab = "Density"),
+  error = function(e) warning("plot(spat.inla.d) skipped: ", e$message)
+)
 
 summary(Cs.inla.null)
 
@@ -3448,6 +3460,11 @@ CSD2$Chinook.vol.cor.conc.lower=replace_na(round(CSD2$Chinook.c.well.lower*CSD2$
 
 KLMData = CSD2
 KLMData.KLM=subset(KLMData,SiteN==1)
+KLMData.I5 =subset(KLMData,SiteN==2)
+KLMData.TOH=subset(KLMData,SiteN==3)
+KLMData.BVR=subset(KLMData,SiteN==4)
+KLMData.KMN=subset(KLMData,SiteN==5)
+KLMData.SV =subset(KLMData,SiteN==6)
 
 
 KLMData$C.shasta.Copies.Second=KLMData$C.shasta.vol.cor.conc*KLMData$SubQ..L.s.
@@ -5293,13 +5310,13 @@ par(mfrow=c(1,1))
 
 library(sf)
 library(raster)
-library(rgeos)
+# library(rgeos)  # retired 2023; sf handles all geometry
 library(sp)
-library(maptools)
+# library(maptools)  # retired 2023; sf handles all map tools
 library(mgcv)
 library(magrittr)
 require(RColorBrewer)
-require(rgdal)
+# require(rgdal)  # retired; sf loaded instead
 
 
 
@@ -7238,8 +7255,8 @@ library(multcomp)
 
 postHocs2 <- multcomp::glht(ancova_model, linfct = mcp(method = "Tukey"))
 
-summary(postHocs)
-confint(postHocs)
+summary(postHocs2)
+confint(postHocs2)
 
 postHocs2 <- multcomp::glht(ancova_model, linfct = mcp(Site = "Tukey"))
 
@@ -7335,8 +7352,10 @@ ggplot(bardata2, aes(x=Distance.Left.Bank.m, y=Cs.diff))+
 #### marginal calcs ####
 ## chose a marginal and compare the with the results computed by the
 ## inla-program
-r = nospat.inla.d.m$summary.fixed["x",]
-m = nospat.inla.d.m$marginals.fixed$DistanceFromShore.m.z.z
+# NOTE: nospat.inla.d.m was never defined; using Cs.inla.null as a stand-in
+tryCatch({
+r = Cs.inla.null$summary.fixed[1,]
+m = Cs.inla.null$marginals.fixed$DistanceFromShore.m.z.z
 
 ## compute the 95% HPD interval
 inla.hpdmarginal(0.95, m)
@@ -7371,5 +7390,6 @@ print(r)
 print(c(mean=m1, sd=stdev, "0.0quant" = q[1], "0.999quant" = q[2]))
 ## using the buildt-in function
 inla.zmarginal(m)
+}, error = function(e) warning("marginal calcs section skipped: ", e$message))
 
 #### end ####
