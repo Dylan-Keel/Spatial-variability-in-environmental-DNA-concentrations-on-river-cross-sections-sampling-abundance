@@ -48,14 +48,14 @@ library(ggregplot)
 ###############Chinook GLMM analysis ####
 
 ## my working directory
-setwd("C:/Users/dylan/OneDrive/Desktop/Thesis/GS/GradSchool/GRAD SCHOOL/Project/Thesis")
+setwd("C:/Users/dylan/OneDrive/Desktop/VSC/Thesis_2026/eDNA_Klamath_Working/R_code")
 # source useful scripts
 source("HighstatLibV13.R")
 source("INLA_plotting_functions.R")
 
 
 ## Read in all the data
-CSD2=read.csv("CSD.csv")
+CSD2=read.csv("../data/CSD.csv")
 
 
 ## Find the upper lower and mean concentrations per liter
@@ -1197,7 +1197,7 @@ sf.null<-Copies~ -1 + f(w, model = spde)
 
 
 
-load("C:/Users/dylan/OneDrive/Desktop/Thesis/GS/GradSchool/GRAD SCHOOL/Project/Thesis/Chinook.metar.new.rda")
+load("../data/Chinook.metar.new.rda")
 msr=matrix(nrow=10,ncol=100)
 msr2=matrix(nrow=10,ncol=100)
 
@@ -1910,14 +1910,14 @@ library(ggregplot)
 
 
 ## my working directory
-setwd("C:/Users/dylan/OneDrive/Desktop/Thesis/GS/GradSchool/GRAD SCHOOL/Project/Thesis")
+setwd("C:/Users/dylan/OneDrive/Desktop/VSC/Thesis_2026/eDNA_Klamath_Working/R_code")
 # source useful scripts
 source("HighstatLibV13.R")
 source("INLA_plotting_functions.R")
 
 
 ## Read in all the data
-CSD2=read.csv("CSD.csv")
+CSD2=read.csv("../data/CSD.csv")
 
 
 ## Find the upper lower and mean concentrations per liter
@@ -2981,7 +2981,7 @@ sf.null<-Copies~ -1 + f(w, model = spde)
 #we load the file from the K.fold cross-validation
 # select the most parsimonious model with mean transferability within 0.05 of the top model
 
-load("C:/Users/dylan/OneDrive/Desktop/Thesis/GS/GradSchool/GRAD SCHOOL/Project/Thesis/C.shasta.metar.new.rda")
+load("../data/C.shasta.metar.new.rda")
 msr=matrix(nrow=10,ncol=100)
 msr2=matrix(nrow=10,ncol=100)
 
@@ -3393,8 +3393,8 @@ summary(Cs.inla.null)
 
 library(tidyverse)
 library(ggplot2)
-setwd("C:/Users/dylan/OneDrive/Desktop/Thesis/GS/GradSchool/GRAD SCHOOL/Project/Thesis")
-data=read.csv("MASTER.FINAL.ddPCRdata.Cshasta2021.csv")
+setwd("C:/Users/dylan/OneDrive/Desktop/VSC/Thesis_2026/eDNA_Klamath_Working/R_code")
+data=read.csv("../data/MASTER.FINAL.ddPCRdata.Cshasta2021.csv")
 #view(data)
 # # of runs - # of NTCs
 length(unique(data$Sample.ID))
@@ -3411,7 +3411,7 @@ data$C.shasta.c.well[(grep("FB",data$Sample.ID))]
 # #3 was rerun twice (#2 and #1) and showed negative. Error likely associated 
 # with lab work
 
-CSD2=read.csv("CSD.csv")
+CSD2=read.csv("../data/CSD.csv")
 #CSD2=cbind(CSD2,Depth)
 
 
@@ -3426,12 +3426,12 @@ CSD2$Chinook.vol.cor.conc.upper=replace_na(round(CSD2$Chinook.c.well.upper*CSD2$
 CSD2$C.shasta.vol.cor.conc.lower=replace_na(round(CSD2$C.shasta.c.well.lower*CSD2$Elution.volum..uL./15*CSD2$Volume..ml./1000,0),0)
 CSD2$Chinook.vol.cor.conc.lower=replace_na(round(CSD2$Chinook.c.well.lower*CSD2$Elution.volum..uL./15*CSD2$Volume..ml./1000,0),0)
 
-setwd("C:/Users/dylan/OneDrive/Desktop/Thesis/GS/GradSchool/GRAD SCHOOL/Project/Thesis")
+setwd("C:/Users/dylan/OneDrive/Desktop/VSC/Thesis_2026/eDNA_Klamath_Working/R_code")
 
 library(tidyverse)
 
 #write.csv(CSD2,file="CSD2.csv")
-CSD2=read.csv("CSD.csv")
+CSD2=read.csv("../data/CSD.csv")
 #CSD2=cbind(CSD2,Depth)
 
 
@@ -3510,7 +3510,7 @@ Total.Copies.Second.Cs.SV=subset(Total.Copies.Second.Cs,SiteN==6)
 
 
 
-boxplot.data=read.csv("Boxplot.data.csv")
+boxplot.data=read.csv("../data/Boxplot.data.csv")
 
 boxplot.data$SiteN=as.factor(boxplot.data$SiteN)
 boxplot.data$Species=as.factor(boxplot.data$Species)
@@ -3524,7 +3524,7 @@ boxplot.data.Chinook=filter(boxplot.data, Species=="Chinook")
 rm(SiteN)
 
 
-dist=read.csv("2021FIELD_DATA_Klamath_Discharge.csv")
+dist=read.csv("../data/2021FIELD_DATA_Klamath_Discharge.csv")
 
 
 
@@ -7097,7 +7097,7 @@ Sig.sq.Chinook=CSD2%>%group_by(SiteN)%>%
 
 
 
-X2021FIELD_DATA_Klamath_2=read.csv("2021FIELD_DATA_Klamath.2.csv")
+X2021FIELD_DATA_Klamath_2=read.csv("../data/2021FIELD_DATA_Klamath.2.csv")
 
 DI2=X2021FIELD_DATA_Klamath_2[grep("_DI_",X2021FIELD_DATA_Klamath_2$Sample.ID),]
 
