@@ -3,7 +3,7 @@
 
 options(repos = c(CRAN = "https://cloud.r-project.org"))
 
-cran <- c("dplyr", "tidyr", "purrr", "stringr", "ggplot2", "ggpubr", "sp", "gstat",
+cran <- c("dplyr", "tidyr", "purrr", "stringr", "ggplot2", "ggpubr", "sp", "gstat", "spdep",
           "mgcv", "assertthat", "tibble", "remotes", "shiny", "scales")
 missing <- cran[!cran %in% rownames(installed.packages())]
 if (length(missing)) install.packages(missing, dependencies = TRUE)

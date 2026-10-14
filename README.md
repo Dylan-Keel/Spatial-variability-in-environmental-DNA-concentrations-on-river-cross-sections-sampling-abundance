@@ -18,7 +18,7 @@ data/       the 192 water samples with ddPCR results (CSD.csv), field data, and 
             cross-validation results
 figures/    Figures 1 to 8 as 600 dpi PNG (vector PDF copies in figures/pdf/), the Supporting
             Information figures S1 to S13 in figures/supporting_information/, and the captions
-results/    results tables, model summaries, the analysis cache, and the session information
+results/    results tables, model summaries, Moran's I of the residuals, the analysis cache, and the session information
 ```
 
 # Installation

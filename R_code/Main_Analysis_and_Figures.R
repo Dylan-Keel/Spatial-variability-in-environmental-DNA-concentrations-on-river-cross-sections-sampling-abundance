@@ -36,6 +36,7 @@ library(ggplot2)
 library(ggpubr)
 library(sp)
 library(gstat)
+library(spdep)       # Moran's I of the model residuals
 library(mgcv)
 library(inlatools)   # plot methods for the dispersion and distribution checks
 library(INLAutils)   # residual plots
@@ -544,6 +545,41 @@ write.csv(site.summary, "../results/site_summary.csv", row.names = FALSE)
 write.csv(molecular.summary, "../results/molecular_summary.csv", row.names = FALSE)
 write.csv(n.required, "../results/sample_size_by_site_and_CV.csv", row.names = FALSE)
 write.csv(sample.size.supp, "../results/sample_size_by_site_SE_targets.csv", row.names = FALSE)
+
+## Moran's I of the Pearson residuals, before and after the spatial random
+## field, among samples on the same cross section. Weights: inverse distance,
+## and all pairs within 10 m or 20 m, with and without the paired surface and
+## depth samples on one vertical. Distances include sample depth so paired
+## samples are distinct. Between-section pairs carry no weight because the
+## site random effect accounts for that scale.
+moran.xyz  <- cbind(utm$Xkm * 1000, utm$Ykm * 1000, CSD2$D.M.)
+moran.D    <- pmax(as.matrix(dist(moran.xyz)), 0.25); diag(moran.D) <- NA
+moran.same <- outer(CSD2$Site, CSD2$Site, "==")
+moran.lateral <- as.matrix(dist(cbind(utm$Xkm, utm$Ykm) * 1000)) > 0.5
+moran.listw <- function(W) { W[!moran.same | is.na(W)] <- 0; mat2listw(W, style = "W") }
+moran.band  <- function(dmax, other.verticals = FALSE) {
+  W <- (moran.D <= dmax) * 1
+  if (other.verticals) W <- W * moran.lateral
+  W
+}
+moran.weights <- list("inverse distance"            = moran.listw(1 / moran.D),
+                      "pairs within 10 m"           = moran.listw(moran.band(10)),
+                      "pairs within 20 m"           = moran.listw(moran.band(20)),
+                      "other verticals within 10 m" = moran.listw(moran.band(10, TRUE)),
+                      "other verticals within 20 m" = moran.listw(moran.band(20, TRUE)))
+moran.resid <- list("C. shasta, non-spatial NB GLMM"         = resid.nbn.cs,
+                    "C. shasta, selected spatial model"      = resid.null.cs,
+                    "O. tshawytscha, non-spatial NB GLMM"    = resid.nbn.ot,
+                    "O. tshawytscha, selected spatial model" = resid.d.ot)
+set.seed(SEED)
+morans.I <- bind_rows(lapply(names(moran.resid), function(r) bind_rows(lapply(names(moran.weights), function(w) {
+  mt <- suppressWarnings(moran.test(moran.resid[[r]], moran.weights[[w]], randomisation = TRUE, alternative = "greater"))
+  mc <- moran.mc(moran.resid[[r]], moran.weights[[w]], nsim = 9999, alternative = "greater")
+  data.frame(residuals = r, weights = w, I = unname(mt$estimate[1]), expected = unname(mt$estimate[2]),
+             z = unname(mt$statistic), p.normal = mt$p.value, p.permutation = mc$p.value)
+}))))
+print(morans.I, digits = 3, row.names = FALSE)
+write.csv(morans.I, "../results/morans_I_residuals.csv", row.names = FALSE)
 
 ## Selected model summaries and spatial field parameters
 model.summaries <- bind_rows(
