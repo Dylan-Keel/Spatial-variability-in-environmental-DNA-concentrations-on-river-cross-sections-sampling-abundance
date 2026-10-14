@@ -6,4 +6,4 @@
 
 `C.shasta.metar.new.rda` and `Chinook.metar.new.rda` are the saved results of the 100 repeats of 10-fold cross-validation used for model selection (validation R² for each of the sixteen candidate models, in each fold and repeat).
 
-Column-level metadata, compiled with the USGS MetadataWizard, are distributed with the data release.
+Column-level metadata for these files will accompany the Dryad data release (FGDC format, compiled with the USGS MetadataWizard); the column names in `CSD.csv` are described in the comments of the main script where they are used.
