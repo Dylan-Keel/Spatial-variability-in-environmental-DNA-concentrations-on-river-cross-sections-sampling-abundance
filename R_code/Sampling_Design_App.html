@@ -393,7 +393,7 @@
     $('csTitle').innerHTML = `Site ${s.id}: concentration smoothed from the ${n} measured samples, with simulated error between them`;
     box.style.display = '';
     box.innerHTML = `<h3>Site ${s.id} (${s.code}), ${sp.html}: what the 2021 sampling of Keel et al. (2026) achieved</h3>
-      <p><b>Design.</b> ${n} one-liter samples on ${verts.length} verticals about ${spacing} m apart across a ${s.W} m wide section: ${nSurf} surface grabs and ${nDeep} samples at depth. Measured mean ${fmtNum(SITE.mean)} copies/L, site CV ${p.cvSite.toFixed(2)}${zeros ? `; ${zeros} of the ${n} samples had no detectable ${sp.html}` : ''}. The three highest samples hold ${Math.round(top3 * 100)}% of the summed concentration.</p>
+      <p><b>Design.</b> ${n} one-liter samples on ${verts.length} verticals about ${(+spacing.toFixed(1))} m apart across a ${s.W} m wide section: ${nSurf} surface grabs and ${nDeep} samples at depth. Measured mean ${fmtNum(SITE.mean)} copies/L, site CV ${p.cvSite.toFixed(2)}${zeros ? `; ${zeros} of the ${n} samples had no detectable ${sp.html}` : ''}. The three highest samples hold ${Math.round(top3 * 100)}% of the summed concentration.</p>
       <p><b>Precision reached.</b> Treating the samples as independent, the CV of the estimated section mean is ${cvInd.toFixed(3)} (= ${p.cvSite.toFixed(2)} / &radic;${n}). Using the positions actually sampled and the species' autocorrelation (p = ${p.p.toFixed(2)}, range ${p.rangeM} m), it is ${cvAs.toFixed(3)}. ${verdict}</p>
       <p><b>What this section says.</b> ${speciesNote}</p>
       <p><b>Limits of this reading.</b></p>
