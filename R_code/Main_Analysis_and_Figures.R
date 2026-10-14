@@ -732,24 +732,27 @@ p6d <- effect.plot(GRSpred, "DistanceFromShore.m.z.z", "Scaled distance to shore
 fig6 <- ggarrange(p6a + ggtitle("A"), p6b + ggtitle("B"), p6c + ggtitle("C"), p6d + ggtitle("D"), ncol = 2, nrow = 2, align = "hv")
 save_fig(fig6, "Figure_6", w = FIG_W2, h = 7)
 
-## Figure 7: the general case, n_ind = (CV_site / CV_target)^2, with the six sites
+## Figure 7: the general case, n_ind = (CV_site / CV_target)^2. The grey band is
+## the range of site CVs observed in this study; ticks on the axis are the
+## twelve site-by-species CVs.
 cv.seq <- seq(0.02, 1.6, length.out = 400)
 gen7 <- bind_rows(lapply(c(0.1, 0.2, 0.3), function(cv_t) data.frame(cv = cv.seq, n = (cv.seq / cv_t)^2, CV = as.character(cv_t))))
-pts7 <- site.stats %>% mutate(n = (cv / 0.2)^2)
-fig7 <- ggplot(gen7, aes(x = cv, y = n, colour = CV)) +
-  geom_line(linewidth = 0.9) +
-  geom_point(data = pts7, aes(x = cv, y = n, shape = species), colour = "black", fill = "white", size = 2.6, stroke = 0.8) +
-  geom_text(data = pts7, aes(x = cv, y = n, label = Site, vjust = ifelse(species == "C. shasta", 2.0, -1.1)), colour = "black", size = 3) +
-  scale_colour_manual(values = COL_CV, name = "Target CV of the estimated mean") +
-  scale_shape_manual(values = c("C. shasta" = 21, "O. tshawytscha" = 24), name = "Sites at target CV = 0.2",
-                     labels = c(expression(italic("C. shasta")), expression(italic("O. tshawytscha")))) +
+cv.range <- range(site.stats$cv)
+fig7 <- ggplot(gen7, aes(x = cv, y = n)) +
+  annotate("rect", xmin = cv.range[1], xmax = cv.range[2], ymin = -Inf, ymax = Inf, fill = "grey92") +
+  annotate("text", x = cv.range[2] - 0.02, y = 115, label = "observed site CVs", hjust = 1, size = 3.2, colour = "grey35") +
+  geom_line(aes(colour = CV), linewidth = 0.9) +
+  geom_rug(data = site.stats, aes(x = cv, colour = species), inherit.aes = FALSE, sides = "b", length = grid::unit(0.05, "npc"), linewidth = 0.8, show.legend = FALSE) +
+  scale_colour_manual(values = c(COL_CV, COL_SPECIES), breaks = names(COL_CV),
+                      name = expression(Target~CV~of~the~estimated~mean*":"~~n[ind] == (CV[site] / CV[target])^2)) +
   scale_x_continuous(limits = c(0, 1.6), breaks = seq(0, 1.6, 0.4), expand = expansion(mult = c(0, 0.03))) +
-  coord_cartesian(ylim = c(0, 250), expand = FALSE) +
-  annotate("text", x = 0.05, y = 240, label = "n[ind] == (CV[site] / CV[target])^2", parse = TRUE, hjust = 0, size = 4) +
+  scale_y_continuous(breaks = seq(0, 120, 20)) +
+  coord_cartesian(ylim = c(0, 120), expand = FALSE) +
   labs(x = expression(bold("Site CV (" * sigma / mu * ")")), y = "Required 1-L samples (n)") +
-  theme(plot.margin = margin(6, 14, 6, 6)) +
-  guides(colour = guide_legend(order = 1, title.position = "top", nrow = 1), shape = guide_legend(order = 2, title.position = "top", nrow = 1))
-save_fig(fig7, "Figure_7", w = FIG_W15, h = 5)
+  theme(legend.position = c(0.02, 0.98), legend.justification = c(0, 1), legend.background = element_blank(), legend.key = element_blank(),
+        legend.title = element_text(face = "plain", size = 11), plot.margin = margin(6, 14, 6, 6)) +
+  guides(colour = guide_legend(title.position = "top", nrow = 1))
+save_fig(fig7, "Figure_7", w = FIG_W15, h = 4.2)
 
 ## Figure 8: samples required against site CV and section width, under random
 ## placement and under stratified placement at three spatial proportions of
