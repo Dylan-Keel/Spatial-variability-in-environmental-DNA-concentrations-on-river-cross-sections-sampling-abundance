@@ -6,6 +6,6 @@
 
 `C.shasta.metar.new.rda` and `Chinook.metar.new.rda` are the saved results of the 100 repeats of 10-fold cross-validation used for model selection (validation R² for each of the sixteen candidate models, in each fold and repeat).
 
-`metadata/` holds an FGDC (CSDGM) metadata record for each of the four files, with a definition, units, and range or code list for every column. The records validate against the FGDC schema and are the ones submitted with the Dryad data release.
+`metadata/` holds an FGDC (CSDGM) metadata record for each of the four files, with a definition, units, and range or code list for every column. The same content in readable form is in `metadata/README.md` (renders on GitHub) and `metadata/Metadata.xlsx` (one sheet per file). The records validate against the FGDC schema and are the ones submitted with the Dryad data release.
 
 The `Meters` column of `CSD.csv` is the river distance of each cross section from the mouth (river kilometer x 1000). In the file as first archived these six values were attached to the sites in alphabetical order of site code; they were reassigned to upstream-to-downstream order on 14 October 2026. Between-site distances are far larger than the fitted correlation ranges, so the correction does not change the results materially.

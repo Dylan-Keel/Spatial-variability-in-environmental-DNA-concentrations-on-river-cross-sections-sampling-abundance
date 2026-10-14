@@ -33,7 +33,7 @@ https://dylan-keel.github.io/Spatial-variability-in-environmental-DNA-concentrat
 
 The analysis was first run in 2023 (R 4.4.2). The code was reorganized and rerun on R 4.5.3 in 2026 after three packages it used were retired from CRAN; the results in `results/` are from that rerun and reproduce the original values.
 
-Metadata for the data files are in `data/metadata/`: one FGDC (CSDGM) record per file, with a definition, units, and range or code list for every column, validated against the FGDC schema. They open in the USGS MetadataWizard (https://github.com/DOI-USGS/fort-pymdwizard) and accompany the Dryad data release.
+Metadata for the data files are in `data/metadata/`: one FGDC (CSDGM) record per file, with a definition, units, and range or code list for every column, validated against the FGDC schema, together with a readable version of the same content (`data/metadata/README.md`, and `Metadata.xlsx` with one sheet per file). They open in the USGS MetadataWizard (https://github.com/DOI-USGS/fort-pymdwizard) and accompany the Dryad data release.
 
 # Contribute
 
