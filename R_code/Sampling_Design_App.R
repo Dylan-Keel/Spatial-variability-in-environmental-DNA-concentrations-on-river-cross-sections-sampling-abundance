@@ -140,7 +140,7 @@ ui <- fluidPage(
       try { if (localStorage.getItem('edna_howto_closed') === '1') h.removeAttribute('open'); } catch (e) {}
       h.addEventListener('toggle', function () { try { localStorage.setItem('edna_howto_closed', h.open ? '0' : '1'); } catch (e) {} });
     });"))),
-  titlePanel("eDNA River Cross-Section Sampling Design"),
+  titlePanel("eDNA River Cross-Section Sampling Design Tool"),
   tags$p(class = "cite", HTML("Companion to Keel, D. J., N. A. Som, M. J. Henderson, and A. P. Kinziger. In prep. <i>Spatial variability in environmental DNA concentrations on river cross sections: implications for sampling design and abundance estimation</i>.")),
   tags$details(class = "howto", id = "howto", open = NA,
     tags$summary("How to use this page"),
