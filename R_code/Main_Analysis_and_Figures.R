@@ -514,17 +514,6 @@ species.par <- list("C. shasta"      = list(p = spatial.proportion.cs, range_m =
                     "O. tshawytscha" = list(p = spatial.proportion.ot, range_m = range.ot.m))
 matern.tab <- lapply(species.par, function(s) matern_tables(s$range_m))
 
-## Sample sizes for a target standard error (Cochran finite population form),
-## reported in the Supporting Information
-cochran.n <- function(x, N, SE) { B <- 2 * SE; V <- B^2 / 4; s2 <- var(x); ceiling(s2 / (V + s2 / N)) }
-sample.size.supp <- CSD2 %>% group_by(Site) %>%
-  summarise(N = n(),
-            mean.cs = mean(C.shasta.vol.cor.conc), var.cs = var(C.shasta.vol.cor.conc), CV.cs = sqrt(var.cs) / mean.cs * 100,
-            n.cs.SE15000 = cochran.n(C.shasta.vol.cor.conc, N, 15000), n.cs.SE3000 = cochran.n(C.shasta.vol.cor.conc, N, 3000),
-            mean.ot = mean(Chinook.vol.cor.conc), var.ot = var(Chinook.vol.cor.conc), CV.ot = sqrt(var.ot) / mean.ot * 100,
-            n.ot.SE214 = cochran.n(Chinook.vol.cor.conc, N, 214), n.ot.SE107 = cochran.n(Chinook.vol.cor.conc, N, 107),
-            .groups = "drop")
-
 #### 5. results tables ####
 
 ## Molecular results reported in the text: field blanks and the proportion of
@@ -552,7 +541,6 @@ write.csv(table1, "../results/Table_1_model_selection.csv", row.names = FALSE)
 write.csv(site.summary, "../results/site_summary.csv", row.names = FALSE)
 write.csv(molecular.summary, "../results/molecular_summary.csv", row.names = FALSE)
 write.csv(n.required, "../results/sample_size_by_site_and_CV.csv", row.names = FALSE)
-write.csv(sample.size.supp, "../results/sample_size_by_site_SE_targets.csv", row.names = FALSE)
 
 ## Moran's I of the Pearson residuals, before and after the spatial random
 ## field, among samples on the same cross section. Weights: inverse distance,
@@ -906,7 +894,7 @@ save_fig(figD2, "Figure_S13", w = FIG_W2, h = 7, dir = supp)
 
 dev.off()
 save(CSD2, utm, site.summary, site.stats, long, scale.par,
-     selection.cs, selection.ot, table1, molecular.summary, n.required, sample.size.supp,
+     selection.cs, selection.ot, table1, molecular.summary, n.required,
      fitted.cs, fitted.ot, r2.cs, r2.ot, r2.null.ot, GRSpred,
      Kappa.cs, Range.cs, Sigma_u.cs, cor.cs, matern.at.cs, SpatField.cs,
      Kappa.ot, Range.ot, Sigma_u.ot, cor.ot, matern.at.ot, SpatField.ot,
