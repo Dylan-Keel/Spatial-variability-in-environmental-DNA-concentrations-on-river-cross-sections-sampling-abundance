@@ -1,11 +1,9 @@
-# Instructions
-Use the Main_Analysis_and_Figures.R script to replicate the analyses and create figures presented in the manuscript.
+# Data
 
-HighstatLibv13.R and INLA_plotting_functions.R are sourced in the main analysis script for plotting and data visualization
+`CSD.csv` is the analysis dataset: one row for each of the 192 water samples, with the sampling location on the cross section (distance from the left bank, depth, distance to shore, distance to thalweg, velocity, sampler type), the water volume filtered and the elution volume, and the ddPCR results for *C. shasta* and *O. tshawytscha* (Poisson-corrected copies per reaction with their limits). The main script converts these to copies per liter.
 
-To clone this repository to your local machine, run the following command in your terminal or Git Bash:
+`2021FIELD_DATA_Klamath.2.csv` and `2021FIELD_DATA_Klamath_Discharge.csv` are the field sheets from the six cross sections, including the depth-integrated samples and the discharge measurements. `MASTER.FINAL.ddPCRdata.Cshasta2021.csv` is the complete ddPCR output, including the no-template controls and field blanks.
 
-git clone https://github.com/Dylan-Keel/Spatial-variability-in-environmental-DNA-concentrations-on-river-cross-sections-sampling-abundance.git
+`C.shasta.metar.new.rda` and `Chinook.metar.new.rda` are the saved results of the 100 repeats of 10-fold cross-validation used for model selection (validation R² for each of the sixteen candidate models, in each fold and repeat).
 
-Install required packages noted in the main analysis script prior to replicating analyses.
-
+Column-level metadata, compiled with the USGS MetadataWizard, are distributed with the data release.

@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>eDNA Sampling Design</title>
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 13px; background: #f5f7fa; color: #333; }
+    h2 { background: #1a5276; color: white; padding: 9px 20px; font-size: 16px; letter-spacing: 0.3px; }
+    h2 .cite { display: block; font-size: 11.5px; font-weight: normal; color: #d5e8f3; letter-spacing: 0; margin-top: 2px; }
+    details.howto { background: #fffdf3; border-bottom: 1px solid #e8dfb8; padding: 6px 20px; font-size: 12.5px; }
+    details.howto summary { cursor: pointer; font-weight: bold; color: #7d6608; }
+    details.howto ol { margin: 6px 0 4px 18px; line-height: 1.5; max-width: 1100px; }
+    details.howto li { margin-bottom: 2px; }
+    .app { display: flex; height: calc(100vh - 56px); }
+    .sidebar { width: 290px; min-width: 290px; background: white; border-right: 1px solid #d5e8f3; overflow-y: auto; padding: 12px 14px; }
+    .sidebar h4 { color: #1a5276; font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; border-bottom: 1px solid #d5e8f3; padding-bottom: 3px; margin-top: 14px; margin-bottom: 8px; }
+    .sidebar h4:first-child { margin-top: 2px; }
+    .ctrl { margin-bottom: 4px; }
+    .ctrl label { display: block; font-size: 12px; color: #555; margin-bottom: 2px; line-height: 1.4; }
+    .ctrl .v { font-weight: bold; color: #1a5276; }
+    .ctrl input[type=range] { width: 100%; cursor: pointer; accent-color: #2980b9; margin-top: 1px; }
+    .ctrl input[type=number], .ctrl select { width: 100%; padding: 4px 7px; border: 1px solid #c8d8ea; border-radius: 3px; font-size: 12px; color: #333; background: white; }
+    .radio-grp { display: flex; flex-direction: column; gap: 4px; }
+    .radio-grp label { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 12px; color: #333; }
+    .hint { font-size: 11px; color: #6b7a88; line-height: 1.35; margin: 0 0 10px 0; }
+    hr.div { border: none; border-top: 1px solid #e0eaf3; margin: 10px 0; }
+    button#resim { width: 100%; background: #2980b9; color: white; border: none; padding: 7px; border-radius: 4px; cursor: pointer; font-size: 12px; margin-top: 6px; }
+    button#resim:hover { background: #1a5276; }
+    #siteCtrls { background: #eaf3fb; border-radius: 4px; padding: 8px 10px 4px 10px; margin: 6px 0 8px 0; }
+    .main { flex: 1; overflow-y: auto; padding: 0 16px 14px 16px; }
+    .banner { display: inline-block; font-size: 12px; font-weight: bold; padding: 3px 10px; border-radius: 12px; margin: 10px 0 6px 0; }
+    .banner.sim { background: #e5e8ea; color: #555; }
+    .banner.site { background: #1a5276; color: white; }
+    .panel-title { color: #1a5276; font-weight: bold; font-size: 13px; margin-bottom: 5px; }
+    .top-row { display: flex; gap: 16px; margin-bottom: 14px; align-items: flex-start; }
+    .cross-col { flex: 2.2; min-width: 0; } .res-col { flex: 1; min-width: 180px; }
+    .result-box { background: #eaf3fb; border-left: 4px solid #2980b9; border-radius: 4px; padding: 8px 12px; margin: 5px 0; font-size: 12px; line-height: 1.7; }
+    .result-box b { color: #1a5276; } .result-box small { color: #777; font-size: 11px; }
+    .interp { background: white; border: 1px solid #d5e8f3; border-left: 4px solid #1a5276; border-radius: 4px; padding: 10px 14px; margin: 0 0 14px 0; font-size: 12.5px; line-height: 1.55; }
+    .interp h3 { color: #1a5276; font-size: 13.5px; margin-bottom: 6px; }
+    .interp p { margin-bottom: 6px; }
+    .interp ul { margin: 2px 0 4px 18px; }
+    .interp .ok { color: #1e8449; font-weight: bold; } .interp .short { color: #c0392b; font-weight: bold; }
+    details.defs { background: white; border: 1px solid #d5e8f3; border-radius: 4px; padding: 8px 14px; margin: 12px 0; font-size: 12.5px; }
+    details.defs summary { cursor: pointer; font-weight: bold; color: #1a5276; }
+    details.defs dt { font-weight: bold; margin-top: 7px; } details.defs dd { margin-left: 0; line-height: 1.5; }
+    .contour-ctrls { display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-start; margin-bottom: 8px; }
+    .contour-ctrls .ctrl { width: 230px; } .contour-ctrls .radio-grp { width: 300px; }
+    .contour-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .contour-grid .cpanel { background: white; border: 1px solid #e0eaf3; border-radius: 4px; }
+    .contour-note { font-size: 11.5px; color: #555; line-height: 1.45; margin-top: 8px; }
+    #crossSection, #cvCurve { width: 100%; }
+  </style>
+</head>
+<body>
+  <h2>eDNA River Cross-Section Sampling Design <span class="cite">Companion to Keel, D. J., N. A. Som, M. J. Henderson, and A. P. Kinziger. In prep. <i>Spatial variability in environmental DNA concentrations on river cross sections: implications for sampling design and abundance estimation</i>.</span></h2>
+  <details class="howto" id="howto" open>
+    <summary>How to use this page</summary>
+    <ol>
+      <li><b>Choose a cross section.</b> <i>Simulated</i>: set the site CV, spatial structure, and width yourself, from a pilot study or from the Klamath values given in the hints. <i>Klamath site</i>: load one of the six sections of Keel et al. (2026) and read what the 2021 sampling achieved for either species.</li>
+      <li><b>Set the precision you need.</b> The target CV is the standard error of the estimated section mean divided by the mean. The right-hand column gives the number of 1-L samples for that target, and the CV reached with a given n.</li>
+      <li><b>Choose placement.</b> Simple random uses the manuscript's formula, n = (CV<sub>site</sub> / CV<sub>target</sub>)&sup2;. Spatially stratified spreads samples evenly across the width and needs fewer samples when concentrations are autocorrelated. For a Klamath site, <i>as sampled</i> uses the positions actually sampled.</li>
+      <li><b>Plan in general</b> with the contour maps at the bottom, which give n against site CV and width for any section.</li>
+      <li>Changing the site CV, spatial structure, width, mean, n, or placement returns the page to a simulated section; the target CV and the contour controls do not.</li>
+    </ol>
+  </details>
+  <div class="app">
+    <div class="sidebar">
+      <h4>Cross section</h4>
+      <div class="radio-grp">
+        <label><input type="radio" name="mode" value="sim" checked> Simulated</label>
+        <label><input type="radio" name="mode" value="site"> Klamath site from the paper</label>
+      </div>
+      <div id="siteCtrls" style="display:none">
+        <div class="ctrl"><label>Site</label>
+          <select id="site_sel">
+            <option value="1">1 (KLM, upstream)</option><option value="2">2 (I5)</option><option value="3" selected>3 (TOH)</option>
+            <option value="4">4 (BVR)</option><option value="5">5 (KMN)</option><option value="6">6 (SV, downstream)</option>
+          </select></div>
+        <div class="ctrl"><label>Species</label>
+          <select id="sp_sel"><option value="cs" selected>C. shasta</option><option value="ot">O. tshawytscha</option></select></div>
+        <p class="hint" style="margin-bottom:4px">Loads the measured width, mean, site CV, and sample positions of that section, with the species' spatial structure from the fitted models.</p>
+      </div>
+      <h4>Concentration</h4>
+      <div class="ctrl"><label>Mean (copies / L)</label><input type="number" id="mean_conc" value="1000" min="1" step="100"></div>
+      <p class="hint">Mean eDNA concentration on the section. Only scales the colours of the simulated field; a Klamath site uses its measured samples instead.</p>
+      <div class="ctrl"><label>Site CV (single-sample CV) &nbsp;<span class="v" id="vCvSite">0.80</span></label><input type="range" id="cv_site" min="0.10" max="2.00" step="0.01" value="0.80"></div>
+      <p class="hint">Coefficient of variation (SD &divide; mean) among single 1-L samples taken across the section, as measured in a pilot study. On the Klamath: 0.40&ndash;1.43.</p>
+      <h4>Spatial structure</h4>
+      <div class="ctrl"><label>Spatial proportion of variance, <i>p</i> &nbsp;<span class="v" id="vP">0.50</span></label><input type="range" id="p" min="0" max="0.95" step="0.01" value="0.50"></div>
+      <p class="hint">Share of the variance among samples that is spatially structured, 1 &minus; nugget/sill from a semivariogram. Klamath estimates: 0.60 (<i>C. shasta</i>), 0.33 (<i>O. tshawytscha</i>).</p>
+      <div class="ctrl"><label>Correlation range (m) &nbsp;<span class="v" id="vRange">30</span></label><input type="range" id="range_m" min="1" max="100" step="0.1" value="30"></div>
+      <p class="hint">Distance at which the Mat&eacute;rn (&nu; = 1) correlation falls to about 0.14. Klamath estimates: about 50 m (<i>C. shasta</i>), about 14 m (<i>O. tshawytscha</i>).</p>
+      <div class="ctrl"><label>Cross-section width (m) &nbsp;<span class="v" id="vWidth">40</span></label><input type="range" id="width_m" min="10" max="150" step="0.5" value="40"></div>
+      <p class="hint">Wetted width of the cross-section. Samples spread over a wider section, relative to the correlation range, are less correlated.</p>
+      <div class="result-box" id="iccBox"></div>
+      <h4>Sample placement</h4>
+      <div class="radio-grp">
+        <label><input type="radio" name="strategy" value="random"> Simple random</label>
+        <label><input type="radio" name="strategy" value="stratified" checked> Spatially stratified</label>
+        <label id="asSampledOpt" style="display:none"><input type="radio" name="strategy" value="sampled"> As sampled at the site (2021)</label>
+      </div>
+      <p class="hint" style="margin-top:6px">Simple random: positions drawn at random across the width. Spatially stratified: one sample at the centre of each of n equal-width strata. As sampled: the verticals and depths used in 2021.</p>
+      <hr class="div">
+      <h4>Solve for n</h4>
+      <div class="ctrl"><label>Target CV (precision goal) &nbsp;<span class="v" id="vCvT">0.20</span></label><input type="range" id="cv_target" min="0.05" max="1.00" step="0.01" value="0.20"></div>
+      <p class="hint">Precision wanted for the estimated section mean: its standard error &divide; the mean. A target CV is a precision criterion, not statistical power. Rules of thumb: 0.1 research, 0.2 management, 0.3 pilot work.</p>
+      <h4>Solve for CV</h4>
+      <div class="ctrl"><label>Number of samples (n) &nbsp;<span class="v" id="vN">9</span></label><input type="range" id="n_given" min="1" max="60" step="1" value="9"></div>
+      <p class="hint">Number of 1-L samples collected on the section.</p>
+      <hr class="div">
+      <button id="resim">&#8635; &nbsp;Re-simulate field</button>
+    </div>
+
+    <div class="main">
+      <div id="modeBanner" class="banner sim">Simulated cross section</div>
+      <div class="top-row">
+        <div class="cross-col"><div class="panel-title" id="csTitle">Simulated river cross-section</div><div id="crossSection"></div></div>
+        <div class="res-col">
+          <div class="panel-title">Samples needed for the target CV</div><div id="nRequired"></div><br>
+          <div class="panel-title">Precision with the given n</div><div id="cvAchieved"></div>
+          <div class="result-box" style="border-left-color:#7f8c8d; background:#f4f6f7">
+  <b>Which mean are you estimating?</b><br>
+  <b>Section mean</b> (n<sub>ind</sub>, n<sub>strat</sub>): the mean concentration on this cross section on the day it is sampled. Variation that every sample on the section shares is part of what you are measuring, so adding samples keeps improving precision.<br>
+  <b>Reach mean</b> (n<sub>adj</sub>): using this one section to stand for a longer reach of river. The section-wide deviation is then error that more samples on the same section cannot remove, so precision levels off at CV<sub>site</sub>&radic;(&rho;/(1&minus;&rho;)). Only sampling more sections reduces it.
+</div>
+        </div>
+      </div>
+      <div id="siteInterp" class="interp" style="display:none"></div>
+      <div><div class="panel-title">Precision of the section mean against sample size</div><div id="cvCurve"></div></div>
+
+      <hr class="div">
+      <div class="panel-title">Samples required against site CV and cross-section width</div>
+      <div class="contour-ctrls">
+        <div class="radio-grp">
+          <label style="font-weight:bold;color:#1a5276">Layout</label>
+          <label><input type="radio" name="clayout" value="two" checked> 2 panels: random vs. stratified at the chosen <i>&nbsp;p</i></label>
+          <label><input type="radio" name="clayout" value="four"> 4 panels: random, then p = 0.25 / 0.50 / 0.75</label>
+        </div>
+        <div class="ctrl"><label>Cap on n (grey = more than this) &nbsp;<span class="v" id="vNmax">300</span></label><input type="range" id="n_max_contour" min="50" max="500" step="50" value="300"></div>
+        <div class="result-box" id="contourSettings" style="min-width:200px"></div>
+      </div>
+      <div class="contour-grid" id="contourGrid"></div>
+      <p class="contour-note">Each panel maps the number of 1-L samples needed to reach the target CV, against site CV (x) and cross-section width (y), at the correlation range set in the sidebar. The white point marks the current site CV and width; in the site view the six Klamath sites are shown for the chosen species.</p>
+      <details class="defs"><summary>Definitions and formulas</summary>
+        <dl>
+          <dt>Site CV</dt><dd>Standard deviation of single 1-L sample concentrations on the section divided by their mean. This is what a pilot study measures.</dd>
+          <dt>Target CV</dt><dd>Standard error of the estimated section mean divided by the mean.</dd>
+          <dt>Simple random placement</dt><dd>CV(n) = CV<sub>site</sub> / &radic;n, so n = (CV<sub>site</sub> / CV<sub>target</sub>)&sup2; (Cochran 1977). This is the manuscript's formula.</dd>
+          <dt>Spatially stratified placement</dt><dd>Samples at the centres of n equal strata across the width. Evenly spaced samples converge on the section average, so precision improves faster than 1/&radic;n when the field is autocorrelated. The gain depends on <i>p</i> and on the correlation range relative to the width; it disappears when the range is much larger or much smaller than the section.</dd>
+          <dt>As sampled</dt><dd>The same calculation with the positions actually sampled across the width. The precision model is one-dimensional, so paired surface and depth samples on one vertical count as one position.</dd>
+          <dt>Intraclass correlation &rho;</dt><dd>&rho; = <i>p</i> &times; <i>c&#772;</i>, where <i>c&#772;</i> is the mean Mat&eacute;rn correlation between two random positions on the section. It is shown in the sidebar for the current width and range.</dd>
+          <dt>Reach mean (design effect)</dt><dd>If the target is the mean of the reach rather than of the sampled section, the deviation shared by all samples on the section is error: CV(n) = CV<sub>site</sub> &radic;[(1 + (n &minus; 1)&rho;) / (n(1 &minus; &rho;))], which levels off at CV<sub>site</sub> &radic;(&rho; / (1 &minus; &rho;)). Only more sections reduce it.</dd>
+          <dt>Simulated field</dt><dd>A log-normal field with the chosen mean and site CV, a share <i>p</i> of its log-variance spatially correlated with the chosen range. The simulated channel is 3 m deep at the thalweg.</dd>
+          <dt>Klamath site field</dt><dd>A kriging smoother of the measured concentrations, with the species' <i>p</i> and range, plus a simulated residual drawn with the kriging variance (a conditional simulation, truncated at zero). It follows the samples where they were taken, within the nugget, and carries realistic error between them; re-simulate redraws only the error. Hover shows both the smoothed value and the value with error. Colours run from zero to the highest measured sample. The channel follows the sampled verticals.</dd>
+          <dt>Klamath sites</dt><dd>The six cross sections of Keel et al. (2026), sampled in 2021 and numbered from upstream to downstream. Site CV, mean, width, and sample positions are the measured values; <i>p</i> and the range are the species-level estimates from the fitted spatial models (<i>C. shasta</i>: p = 0.60, range about 50 m; <i>O. tshawytscha</i>: p = 0.33, range about 14 m).</dd>
+        </dl>
+      </details>
+    </div>
+  </div>
+
+  <script>
+  // ---------- Klamath 2021 cross sections (one row per 1-L sample) ----------
+  const SITES = [{"id":1,"code":"KLM","W":45,"x":[44,40,38,36,34,32,30,28,26,22,20,18,16,14,10,8,44,40,38,36,34,32,30,28,26,24,22,20,18,16,14,12,10],"depth":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.1,1.28,1.1,1.28,1.28,1.28,1.28,1.1,0.91,0.91,0.91,0.55,0.55,0.55,0.55,0.55,0.55],"cs":[0,99,158,156,925,0,44,44,287,1819,7920,20016,13918,65,19441,22871,14,1020,0,698,0,256,408,112,452,1068,10059,9652,21451,15460,6817,7300,8224],"ot":[1360,2426,880,3733,666,864,248,1647,913,788,1223,2404,771,917,3182,3701,791,1590,1441,845,1146,1115,173,466,684,100,316,994,493,1153,230,377,1305]},
+    {"id":2,"code":"I5","W":37,"x":[6,8,10,12,14,16,18,20,22,24,26,28,32,34,36,6,8,10,12,16,18,20,22,24,26,28,30,32],"depth":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.37,0.73,0.37,0.61,0.91,0.91,0.91,0.91,0.91,0.73,0.73,0.55,0.55],"cs":[35274,41785,34176,52672,83749,80883,36346,58389,65724,28060,102059,11547,53292,76701,62533,23017,27355,36817,47403,59229,44402,62544,36689,48984,61164,37170,80953,64638],"ot":[597,625,417,712,1380,1061,447,773,1407,362,1832,638,666,777,820,195,650,581,682,880,605,834,600,1008,613,384,877,703]},
+    {"id":3,"code":"TOH","W":37,"x":[2,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32,34,36,4,6,8,10,12,14,16,18,20,22,24,26,28,30,32],"depth":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.21,0.37,0.37,0.55,0.73,0.73,0.73,0.73,0.91,0.91,0.91,0.91,1.1,0.91,0.73],"cs":[12771,22578,18882,42375,18547,50204,61205,64294,88838,62951,123235,18705,167306,89433,97986,175751,257222,84756,21396,34644,45628,23942,23097,6637,63897,46680,53406,9990,109873,71171,20373,64482,100812],"ot":[177,311,400,764,433,582,640,615,507,463,1022,96,257,441,550,924,1008,529,512,648,355,362,313,143,741,458,527,57,802,389,131,490,382]},
+    {"id":4,"code":"BVR","W":39,"x":[2,5,8,11,14,17,20,23,25,28,30,32,34,36,38,0,0,0,5,8,11,14,17,20,23,25,28,30,32,34,36,38],"depth":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1.28,1.65,1.65,1.46,1.28,1.1,0.91,0.73,0.73,0.55,0.55,0.98,0.73,0.37],"cs":[36448,19210,112677,24324,69847,117000,101893,76090,73383,18990,92869,16443,41852,32933,30153,93693,88380,100113,59546,20107,31020,44982,64244,61662,36294,60886,54083,59540,82390,41904,93730,27251],"ot":[148,86,426,0,459,875,780,353,529,185,307,510,79,118,180,399,363,352,272,157,240,278,265,329,207,375,328,212,452,313,388,132]},
+    {"id":5,"code":"KMN","W":34,"x":[33,31,27.6,25.4,23.8,21,18.5,17.1,15.6,13.6,11.9,10.1,8.6,6.4,4,2,33,31,27.6,25.4,23.8,21,18.5,17.1,15.6,13.6,11.9,10.1,8.6,6.4,4],"depth":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.21,0.37,0.37,0.55,0.55,0.73,0.73,0.91,0.91,0.91,1.1,1.1,1.28,1.46,1.28],"cs":[94212,15536,177560,39438,121856,119322,36365,124259,106590,129577,55406,116662,59800,65073,65736,144310,70059,66706,104988,98441,54263,25918,41059,41854,50706,46483,41040,158458,63307,61492,79250],"ot":[850,139,912,238,529,621,200,749,460,624,342,569,295,236,109,755,285,281,382,181,115,161,161,172,201,88,171,359,118,127,136]},
+    {"id":6,"code":"SV","W":42.5,"x":[2,5.9,7.4,9.2,11.1,12.5,14.7,16.9,18.9,21.2,22.9,25.1,27.1,29.1,31.3,34.1,37.5,41.5,2,5.9,7.4,9.2,11.1,12.5,14.7,16.9,18.9,21.2,22.9,25.1,27.1,29.1,31.3,34.1,37.5],"depth":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.37,0.55,0.73,0.91,0.91,0.91,0.91,1.1,1.1,1.1,1.1,1.1,0.91,0.91,1.1,0.91,0.73],"cs":[77053,74990,88730,31107,55258,55171,35955,32820,58054,40593,31322,103631,50483,43105,44424,35070,38413,68960,37857,39179,35302,68093,34478,38964,40761,65125,128661,41904,38573,86101,52030,38035,63923,68320,40364],"ot":[365,232,283,54,79,105,101,85,203,102,17,135,122,213,314,275,200,28,769,425,153,167,347,167,471,62,161,174,179,96,76,139,270,130,193]}];
+  const SPECIES = { cs: { html: '<i>C. shasta</i>', p: 0.60, range: 50 }, ot: { html: '<i>O. tshawytscha</i>', p: 0.33, range: 14.4 } };
+
+  // ---------- random numbers ----------
+  function mulberry32(seed) { let s = seed >>> 0; return function () { s = (s + 0x6D2B79F5) >>> 0; let t = Math.imul(s ^ (s >>> 15), 1 | s); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  function randNorm(rng) { let u, v; do { u = rng(); } while (u === 0); v = rng(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+  function linspace(a, b, n) { const arr = []; for (let i = 0; i < n; i++) arr.push(a + (b - a) * i / (n - 1)); return arr; }
+  const mean = a => a.reduce((s, v) => s + v, 0) / a.length;
+  const sd = a => { const m = mean(a); return Math.sqrt(a.reduce((s, v) => s + (v - m) ** 2, 0) / (a.length - 1)); };
+  const fmtNum = v => Math.round(v).toLocaleString('en-US');
+
+  // ---------- Matern (nu = 1) correlation, Bessel K1 by polynomial approximation ----------
+  function bessI1(x) { const ax = Math.abs(x); let ans; if (ax < 3.75) { const y = (x / 3.75) ** 2; ans = ax * (0.5 + y * (0.87890594 + y * (0.51498869 + y * (0.15084934 + y * (0.2658733e-1 + y * (0.301532e-2 + y * 0.32411e-3)))))); } else { const y = 3.75 / ax; ans = 0.39894228 + y * (-0.3988024e-1 + y * (-0.362018e-2 + y * (0.163801e-2 + y * (-0.1031555e-1 + y * (0.2282967e-1 + y * (-0.2895312e-1 + y * (0.1787654e-1 - y * 0.420059e-2))))))); ans *= Math.exp(ax) / Math.sqrt(ax); } return x < 0 ? -ans : ans; }
+  function bessK1(x) { if (x <= 2.0) { const y = x * x / 4.0; return Math.log(x / 2.0) * bessI1(x) + (1.0 / x) * (1.0 + y * (0.15443144 + y * (-0.67278579 + y * (-0.18156897 + y * (-0.1919402e-1 + y * (-0.110404e-2 + y * (-0.4686e-4))))))); } const y = 2.0 / x; return (Math.exp(-x) / Math.sqrt(x)) * (1.25331414 + y * (0.23498619 + y * (-0.3655620e-1 + y * (0.1504268e-1 + y * (-0.780353e-2 + y * (0.325614e-2 + y * (-0.68245e-3))))))); }
+  function maternCor(d, kappa) { const x = kappa * d; if (x < 1e-10) return 1; if (x > 40) return 0; return x * bessK1(x); }
+
+  // ---------- 1-D tables of c(u), G(u) = int c, H(u) = int u c ----------
+  // Everything about evenly spaced or random positions on a section reduces to these.
+  function maternTables(rangeM) {
+    const kappa = Math.sqrt(8) / rangeM, du = 0.05, uMax = 200, n = Math.round(uMax / du) + 1;
+    const u = new Float64Array(n), c = new Float64Array(n), G = new Float64Array(n), H = new Float64Array(n);
+    for (let i = 0; i < n; i++) { u[i] = i * du; c[i] = maternCor(u[i], kappa); }
+    for (let i = 1; i < n; i++) { G[i] = G[i - 1] + (c[i] + c[i - 1]) / 2 * du; H[i] = H[i - 1] + (u[i] * c[i] + u[i - 1] * c[i - 1]) / 2 * du; }
+    const interp = (arr, x) => { x = Math.min(x, uMax); const k = x / du, i = Math.floor(k); if (i >= n - 1) return arr[n - 1]; const f = k - i; return arr[i] * (1 - f) + arr[i + 1] * f; };
+    return { c: x => interp(c, x), G: x => interp(G, x), H: x => interp(H, x), rangeM };
+  }
+  const cbarRandom = (W, T) => (2 / (W * W)) * (W * T.G(W) - T.H(W));
+  const gPoint = (s, W, T) => (T.G(s) + T.G(W - s)) / W;
+  function aStratified(n, W, T) {
+    const cWW = cbarRandom(W, T), s = W / n;
+    let pair = 1; for (let k = 1; k < n; k++) pair += 2 * (1 - k / n) * T.c(k * s); pair /= n;
+    let g = 0; for (let i = 1; i <= n; i++) g += gPoint((i - 0.5) * s, W, T); g /= n;
+    return pair - 2 * g + cWW;
+  }
+  // the same quantity for any set of lateral positions (used for the samples as collected)
+  function aPositions(xs, W, T) {
+    const n = xs.length; let pair = 0, g = 0;
+    for (let i = 0; i < n; i++) { g += gPoint(Math.min(Math.max(xs[i], 0), W), W, T); for (let j = 0; j < n; j++) pair += T.c(Math.abs(xs[i] - xs[j])); }
+    return pair / (n * n) - 2 * g / n + cbarRandom(W, T);
+  }
+  const cvRandom = (cvS, n) => cvS / Math.sqrt(n);
+  const cvStrat  = (cvS, n, W, p, T) => p <= 0 ? cvS / Math.sqrt(n) : cvS * Math.sqrt((p * aStratified(n, W, T) + (1 - p) / n) / (1 - p * cbarRandom(W, T)));
+  const cvPositions = (cvS, xs, W, p, T) => p <= 0 ? cvS / Math.sqrt(xs.length) : cvS * Math.sqrt((p * aPositions(xs, W, T) + (1 - p) / xs.length) / (1 - p * cbarRandom(W, T)));
+  const cvReach  = (cvS, n, W, p, T) => { const rho = p * cbarRandom(W, T); return cvS * Math.sqrt((1 + (n - 1) * rho) / (n * (1 - rho))); };
+  const nRandom  = (cvS, cvT) => Math.ceil((cvS / cvT) ** 2);
+  function nStrat(cvS, cvT, W, p, T, nMax) { let best = Infinity; for (let n = 1; n <= nMax; n++) { const f = cvStrat(1, n, W, p, T); if (f < best) best = f; if (best <= cvT / cvS) return n; } return null; }
+  function nReach(cvS, cvT, W, p, T, nMax) { const rho = p * cbarRandom(W, T), den = (cvT / cvS) ** 2 * (1 - rho) - rho; if (den <= 0) return null; const n = Math.ceil((1 - rho) / den); return n > nMax ? null : n; }
+  function nGrid(cvSeq, wSeq, cvT, p, T, design, nMax) {
+    return wSeq.map(W => cvSeq.map(cv => {
+      if (design === 'random') { const n = nRandom(cv, cvT); return n > nMax ? null : n; }
+      if (design === 'reach') return nReach(cv, cvT, W, p, T, nMax);
+      return nStrat(cv, cvT, W, p, T, nMax);
+    }));
+  }
+
+  // ---------- simulated field ----------
+  let SIM_SEED = 42;
+  function gaussKernel(sigma) { if (sigma < 0.4) return [1]; const r = Math.ceil(3 * sigma), k = []; let sum = 0; for (let i = -r; i <= r; i++) { const v = Math.exp(-0.5 * (i / sigma) ** 2); k.push(v); sum += v; } return k.map(v => v / sum); }
+  function conv1D(arr, k) { const n = arr.length, r = (k.length - 1) >> 1, out = new Array(n); for (let i = 0; i < n; i++) { let s = 0; for (let j = 0; j < k.length; j++) s += arr[Math.max(0, Math.min(n - 1, i - r + j))] * k[j]; out[i] = s; } return out; }
+  function blur2D(flat, nX, nY, sX, sY) { const kX = gaussKernel(sX), kY = gaussKernel(sY), tmp = new Array(nX * nY); for (let yi = 0; yi < nY; yi++) { const b = conv1D(flat.slice(yi * nX, (yi + 1) * nX), kX); for (let xi = 0; xi < nX; xi++) tmp[yi * nX + xi] = b[xi]; } const out = new Array(nX * nY); for (let xi = 0; xi < nX; xi++) { const col = []; for (let yi = 0; yi < nY; yi++) col.push(tmp[yi * nX + xi]); const b = conv1D(col, kY); for (let yi = 0; yi < nY; yi++) out[yi * nX + xi] = b[yi]; } return out; }
+  // channel: xl..xr across, bed depth given by depthFn(x); nX x nY grid.
+  // baseField returns a standardised spatially correlated component and white noise on the grid
+  function baseField(xl, xr, depthFn, maxDepth, nX, nY, rangeM) {
+    const rng = mulberry32(SIM_SEED), xg = linspace(xl, xr, nX), yg = linspace(0, maxDepth, nY), width = xr - xl;
+    const depthMax = xg.map(depthFn);
+    const nPts = nX * nY, raw = []; for (let i = 0; i < nPts; i++) raw.push(randNorm(rng));
+    const xSp = width / Math.max(nX - 1, 1), ySp = maxDepth / Math.max(nY - 1, 1);
+    const blurred = blur2D(raw, nX, nY, Math.min(rangeM / xSp, nX * 0.85), Math.min(rangeM / ySp, nY * 0.85));
+    let bMean = 0; for (let i = 0; i < nPts; i++) bMean += blurred[i]; bMean /= nPts;
+    let bVar = 0; for (let i = 0; i < nPts; i++) bVar += (blurred[i] - bMean) ** 2; const bStd = Math.sqrt(bVar / nPts) || 1;
+    const sp2d = [], e2d = [];
+    for (let yi = 0; yi < nY; yi++) { const srow = [], erow = []; for (let xi = 0; xi < nX; xi++) { if (yg[yi] <= depthMax[xi]) { srow.push((blurred[yi * nX + xi] - bMean) / bStd); erow.push(randNorm(rng)); } else { srow.push(null); erow.push(null); } } sp2d.push(srow); e2d.push(erow); }
+    return { xg, yg, sp2d, e2d };
+  }
+  // log-normal field with the chosen mean and site CV (simulated sections)
+  function simulateField(xl, xr, depthFn, maxDepth, nX, nY, meanConc, cvSite, p, rangeM) {
+    const b = baseField(xl, xr, depthFn, maxDepth, nX, nY, rangeM);
+    const sig2Log = Math.log(1 + cvSite * cvSite), muLog = Math.log(meanConc) - sig2Log / 2;
+    const sigU = Math.sqrt(Math.max(p * sig2Log, 0)), sigE = Math.sqrt(Math.max((1 - p) * sig2Log, 1e-8));
+    const z2d = []; let zMin = Infinity, zMax = -Infinity;
+    for (let yi = 0; yi < nY; yi++) { const row = []; for (let xi = 0; xi < nX; xi++) { const sp = b.sp2d[yi][xi]; if (sp === null) { row.push(null); continue; } const v = Math.exp(muLog + sigU * sp + sigE * b.e2d[yi][xi]); row.push(v); if (v < zMin) zMin = v; if (v > zMax) zMax = v; } z2d.push(row); }
+    return { xg: b.xg, yg: b.yg, z2d, zMin, zMax };
+  }
+  function samplePos(n, width, maxDepth, strategy) { const rng = mulberry32(SIM_SEED + 999), xs = [], ys = []; for (let i = 0; i < n; i++) { const x = strategy === 'random' ? rng() * width : (i + 0.5) * width / n; xs.push(x); ys.push(rng() * maxDepth * 4 * (x / width) * (1 - x / width)); } return { xs, ys }; }
+  // bed profile of a Klamath site: deepest sample on each vertical, scaled up a little, interpolated across the width
+  function siteChannel(site) {
+    const byX = {}; site.x.forEach((x, i) => { byX[x] = Math.max(byX[x] || 0, site.depth[i]); });
+    const xl = Math.min(0, Math.min(...site.x) - 1), xr = Math.max(site.W, Math.max(...site.x) + 1);
+    const pts = Object.keys(byX).map(Number).filter(x => byX[x] > 0).sort((a, b) => a - b).map(x => [x, byX[x] * 1.25 + 0.1]);
+    const knots = [[xl, 0], ...pts, [xr, 0]];
+    const depthFn = x => { for (let i = 1; i < knots.length; i++) if (x <= knots[i][0]) { const [x0, d0] = knots[i - 1], [x1, d1] = knots[i]; return x1 === x0 ? d1 : d0 + (d1 - d0) * (x - x0) / (x1 - x0); } return 0; };
+    return { xl, xr, depthFn, maxDepth: Math.max(...pts.map(p => p[1])) };
+  }
+
+  // ---------- conditional simulation through the measured samples ----------
+  // Kriging smoother of the measured concentrations, with the species' p and range, plus a
+  // simulated residual with the kriging variance (unconditional field minus its own kriging).
+  function solveLinear(A, b) {
+    const n = b.length, M = A.map((r, i) => [...r, b[i]]);
+    for (let c = 0; c < n; c++) {
+      let piv = c; for (let r = c + 1; r < n; r++) if (Math.abs(M[r][c]) > Math.abs(M[piv][c])) piv = r;
+      [M[c], M[piv]] = [M[piv], M[c]];
+      for (let r = 0; r < n; r++) { if (r === c) continue; const f = M[r][c] / M[c][c]; if (f === 0) continue; for (let k = c; k <= n; k++) M[r][k] -= f * M[c][k]; }
+    }
+    return M.map((r, i) => r[n] / r[i]);
+  }
+  function conditionalField(site, vals, p, rangeM, ch, nX, nY) {
+    const z = vals, mu = mean(z), s2 = Math.max(sd(z) ** 2, 1e-6), kappa = Math.sqrt(8) / rangeM, n = z.length;
+    // unconditional Gaussian field with the sample mean and variance, on the concentration scale
+    const b = baseField(ch.xl, ch.xr, ch.depthFn, ch.maxDepth, nX, nY, rangeM), sigU = Math.sqrt(p * s2), sigE = Math.sqrt((1 - p) * s2);
+    const f = { xg: b.xg, yg: b.yg, lz2d: b.sp2d.map((row, yi) => row.map((sp, xi) => sp === null ? null : mu + sigU * sp + sigE * b.e2d[yi][xi])) };
+    const dist = (x1, y1, x2, y2) => Math.hypot(x1 - x2, y1 - y2);
+    const Sigma = []; for (let i = 0; i < n; i++) { Sigma.push([]); for (let j = 0; j < n; j++) Sigma[i].push(s2 * (p * maternCor(dist(site.x[i], site.depth[i], site.x[j], site.depth[j]), kappa) + (i === j ? 1 - p : 0))); }
+    // value of the unconditional field at each sample (nearest grid cell inside the channel)
+    const dx = (ch.xr - ch.xl) / (nX - 1), dy = ch.maxDepth / (nY - 1);
+    const sObs = site.x.map((x, i) => { const xi = Math.min(nX - 1, Math.max(0, Math.round((x - ch.xl) / dx))); let yi = Math.min(nY - 1, Math.max(0, Math.round(site.depth[i] / dy))); while (yi > 0 && f.lz2d[yi][xi] === null) yi--; const v = f.lz2d[yi][xi]; return v === null ? mu : v; });
+    const w1 = solveLinear(Sigma, z.map(v => v - mu)), w2 = solveLinear(Sigma, sObs.map(v => v - mu));
+    const z2d = [], m2d = []; let zMin = Infinity, zMax = -Infinity;
+    for (let yi = 0; yi < nY; yi++) { const row = [], mrow = []; for (let xi = 0; xi < nX; xi++) {
+      if (f.lz2d[yi][xi] === null) { row.push(null); mrow.push(null); continue; }
+      let pred = mu, simK = mu;
+      for (let i = 0; i < n; i++) { const k = s2 * p * maternCor(dist(f.xg[xi], f.yg[yi], site.x[i], site.depth[i]), kappa); pred += k * w1[i]; simK += k * w2[i]; }
+      const v = Math.max(0, f.lz2d[yi][xi] + pred - simK), m = Math.max(0, pred);
+      row.push(v); mrow.push(m); if (v < zMin) zMin = v; if (v > zMax) zMax = v; } z2d.push(row); m2d.push(mrow); }
+    return { xg: f.xg, yg: f.yg, z2d, m2d, zMin, zMax };
+  }
+
+  // ---------- mode: simulated section or a Klamath site ----------
+  let MODE = 'sim', SITE = null;
+  const $ = id => document.getElementById(id);
+  const setRadio = (name, val) => { const el = document.querySelector(`input[name="${name}"][value="${val}"]`); if (el) el.checked = true; };
+  function enterSite() {
+    const site = SITES[+$('site_sel').value - 1], sp = $('sp_sel').value, vals = site[sp], m = mean(vals), cv = sd(vals) / m;
+    SITE = { site, sp, vals, mean: m, cv, n: vals.length, W: site.W, ch: siteChannel(site) };
+    $('mean_conc').value = Math.round(m); $('cv_site').value = cv.toFixed(2); $('p').value = SPECIES[sp].p; $('range_m').value = SPECIES[sp].range;
+    $('width_m').value = site.W; $('n_given').value = site.x.length;
+    $('asSampledOpt').style.display = ''; setRadio('strategy', 'sampled'); $('siteCtrls').style.display = '';
+    MODE = 'site'; SIM_SEED = 1000 + site.id; update();
+  }
+  function leaveSite() {
+    MODE = 'sim'; SITE = null; setRadio('mode', 'sim'); $('siteCtrls').style.display = 'none';
+    if (document.querySelector('input[name="strategy"]:checked').value === 'sampled') setRadio('strategy', 'stratified');
+    $('asSampledOpt').style.display = 'none'; update();
+  }
+
+  // ---------- inputs ----------
+  function getP() {
+    return { meanConc: +$('mean_conc').value || 1000, cvSite: +$('cv_site').value, p: +$('p').value, rangeM: +$('range_m').value, widthM: +$('width_m').value,
+      strategy: document.querySelector('input[name="strategy"]:checked').value, cvTarget: +$('cv_target').value, nGiven: +$('n_given').value,
+      layout: document.querySelector('input[name="clayout"]:checked').value, nMax: +$('n_max_contour').value };
+  }
+  let TAB = null, TAB_RANGE = null;
+  function tables(rangeM) { if (TAB_RANGE !== rangeM) { TAB = maternTables(rangeM); TAB_RANGE = rangeM; } return TAB; }
+  const fmtN = n => n === null ? '<span style="color:#c0392b">not reachable</span>' : String(n);
+  const COLORSCALE = [[0, '#c6e2f5'], [0.3, '#6baed6'], [0.6, '#2171b5'], [1, '#08306b']];           // blues: simulated sections and O. tshawytscha
+  const COLORSCALE_CS = [[0, '#e5f5e0'], [0.3, '#a1d99b'], [0.6, '#31a354'], [1, '#00441b']];        // greens: C. shasta
+  const scaleFor = () => (MODE === 'site' && SITE.sp === 'cs') ? COLORSCALE_CS : COLORSCALE;
+
+  // ---------- cross section ----------
+  let csInit = false, cvInit = false;
+  function renderCS(p) {
+    const nX = 55, nY = 20, traces = [];
+    let f, xl, xr, maxDepth, depthFn;
+    if (MODE === 'site') { ({ xl, xr, depthFn, maxDepth } = SITE.ch); } else { xl = 0; xr = p.widthM; maxDepth = 3; depthFn = x => maxDepth * 4 * (x / p.widthM) * (1 - x / p.widthM); }
+    const cs = scaleFor();
+    if (MODE === 'site') f = conditionalField(SITE.site, SITE.vals, p.p, p.rangeM, SITE.ch, nX, nY); else f = simulateField(xl, xr, depthFn, maxDepth, nX, nY, p.meanConc, p.cvSite, p.p, p.rangeM);
+    let zMin = f.zMin, zMax = f.zMax;
+    if (MODE === 'site') { zMin = 0; zMax = Math.max(...SITE.vals); }
+    const hov = MODE === 'site' ? 'x: %{x:.1f} m, depth %{customdata[1]:.2f} m<br>smoothed: %{customdata[0]:,.0f} copies/L<br>with simulated error: %{z:,.0f}<extra></extra>' : 'x: %{x:.1f} m<br>simulated: %{z:,.0f} copies/L<extra></extra>';
+    const cd = MODE === 'site' ? f.m2d.map((row, yi) => row.map(m => [m, f.yg[yi]])) : undefined;
+    traces.push({ type: 'heatmap', x: f.xg, y: f.yg.map(v => -v), z: f.z2d, customdata: cd, zmin: zMin, zmax: zMax, colorscale: cs, showscale: true, colorbar: { title: { text: 'Conc.<br>(copies/L)', side: 'right' }, thickness: 13, len: 0.85, tickformat: ',.0f' }, connectgaps: false, zsmooth: 'best', hovertemplate: hov });
+    const xOut = linspace(xl, xr, 300);
+    traces.push({ type: 'scatter', mode: 'lines', x: xOut, y: xOut.map(x => -depthFn(x)), line: { color: '#222', width: 2 }, hoverinfo: 'skip', showlegend: false });
+    if (MODE === 'site') {
+      const s = SITE.site;
+      traces.push({ type: 'scatter', mode: 'markers', x: s.x, y: s.depth.map(v => -v), customdata: SITE.vals.map((v, i) => [v, s.depth[i] > 0 ? 'at depth' : 'surface']),
+        marker: { size: 10, color: SITE.vals, cmin: zMin, cmax: zMax, colorscale: cs, showscale: false, line: { color: '#111', width: 1.5 } },
+        hovertemplate: 'measured %{customdata[0]:,.0f} copies/L<br>x = %{x:.1f} m, %{customdata[1]}<extra></extra>', showlegend: false });
+    } else {
+      const sp = samplePos(p.nGiven, p.widthM, maxDepth, p.strategy);
+      traces.push({ type: 'scatter', mode: 'markers', x: sp.xs, y: sp.ys.map(v => -v), marker: { size: 10, color: 'white', line: { color: '#111', width: 1.5 } }, hovertemplate: 'sample x: %{x:.1f} m<extra></extra>', showlegend: false });
+    }
+    const ticks = []; for (let d = 0; d <= maxDepth + 1e-9; d += maxDepth > 2 ? 1 : 0.5) ticks.push(+d.toFixed(2));
+    const layout = { height: 220, margin: { l: 52, r: 75, t: 8, b: 44 }, xaxis: { title: 'Distance from left bank (m)', range: [xl - (xr - xl) * 0.01, xr + (xr - xl) * 0.01], zeroline: false, ticksuffix: ' m' }, yaxis: { title: 'Depth (m)', range: [-maxDepth * 1.10, maxDepth * 0.03], tickvals: ticks.map(v => -v), ticktext: ticks.map(String), zeroline: false }, plot_bgcolor: 'white', paper_bgcolor: 'white' };
+    if (!csInit) { Plotly.newPlot('crossSection', traces, layout, { responsive: true, displayModeBar: false }); csInit = true; } else Plotly.react('crossSection', traces, layout);
+  }
+
+  // ---------- CV curve ----------
+  function renderCV(p) {
+    const T = tables(p.rangeM), ns = []; for (let n = 1; n <= 60; n++) ns.push(n);
+    const mk = (name, vals, color, dash) => ({ type: 'scatter', mode: 'lines', name, x: ns, y: vals, line: { color, width: 2.2, dash } });
+    const traces = [mk('Simple random (independence)', ns.map(n => cvRandom(p.cvSite, n)), '#0072B2', 'solid'),
+                    mk('Spatially stratified', ns.map(n => cvStrat(p.cvSite, n, p.widthM, p.p, T)), '#009E73', 'dash'),
+                    mk('Reach mean (autocorrelation-adjusted)', ns.map(n => cvReach(p.cvSite, n, p.widthM, p.p, T)), '#D55E00', 'dot')];
+    if (MODE === 'site') traces.push({ type: 'scatter', mode: 'markers', name: `As sampled in 2021 (n = ${SITE.n})`, x: [SITE.n], y: [cvPositions(p.cvSite, SITE.site.x, p.widthM, p.p, T)], marker: { size: 12, color: '#1a5276', symbol: 'diamond', line: { color: 'white', width: 1.5 } } });
+    const yMax = Math.min(p.cvSite * 1.3, 2.5);
+    const layout = { height: 280, margin: { l: 58, r: 24, t: 8, b: 72 }, xaxis: { title: 'Number of 1-L samples (n)', range: [1, 60], zeroline: false, tickvals: [1, 10, 20, 30, 40, 50, 60] }, yaxis: { title: 'CV of the estimated mean', range: [0, yMax], zeroline: false }, legend: { orientation: 'h', x: 0.5, xanchor: 'center', y: -0.25, font: { size: 12 } }, plot_bgcolor: 'white', paper_bgcolor: 'white',
+      shapes: [{ type: 'line', x0: 1, x1: 60, y0: p.cvTarget, y1: p.cvTarget, line: { dash: 'dash', color: '#555', width: 1.4 } }, { type: 'line', x0: p.nGiven, x1: p.nGiven, y0: 0, y1: yMax, line: { dash: 'dot', color: '#aaa', width: 1.2 } }],
+      annotations: [{ x: 59, y: p.cvTarget + yMax * 0.035, text: `Target CV = ${p.cvTarget.toFixed(2)}`, showarrow: false, xanchor: 'right', font: { size: 11, color: '#444' } }] };
+    if (!cvInit) { Plotly.newPlot('cvCurve', traces, layout, { responsive: true, displayModeBar: false }); cvInit = true; } else Plotly.react('cvCurve', traces, layout);
+  }
+
+  // ---------- numbers ----------
+  function renderResults(p) {
+    const T = tables(p.rangeM), rho = p.p * cbarRandom(p.widthM, T);
+    $('iccBox').innerHTML = `<b>Implied intraclass correlation</b> for this width and range:<br>&rho; = p &times; c&#772; = ${rho.toFixed(2)}`;
+    $('nRequired').innerHTML = `<div class="result-box"><b>Simple random, n<sub>ind</sub>:</b> ${fmtN(nRandom(p.cvSite, p.cvTarget))}<br><b>Spatially stratified, n<sub>strat</sub>:</b> ${fmtN(nStrat(p.cvSite, p.cvTarget, p.widthM, p.p, T, 2000))}<br><small>Reach mean, autocorrelation-adjusted n<sub>adj</sub>: ${fmtN(nReach(p.cvSite, p.cvTarget, p.widthM, p.p, T, 2000))}</small></div>`;
+    const sampled = MODE === 'site' ? `<b>As sampled (n = ${SITE.n}):</b> ${cvPositions(p.cvSite, SITE.site.x, p.widthM, p.p, T).toFixed(3)}<br>` : '';
+    $('cvAchieved').innerHTML = `<div class="result-box">${sampled}<b>Simple random:</b> ${cvRandom(p.cvSite, p.nGiven).toFixed(3)}<br><b>Spatially stratified:</b> ${cvStrat(p.cvSite, p.nGiven, p.widthM, p.p, T).toFixed(3)}<br><small>Reach mean, design effect: ${cvReach(p.cvSite, p.nGiven, p.widthM, p.p, T).toFixed(3)}</small></div>`;
+  }
+
+  // ---------- interpretation of a Klamath site ----------
+  function renderInterp(p) {
+    const box = $('siteInterp'), banner = $('modeBanner');
+    if (MODE !== 'site') { box.style.display = 'none'; banner.className = 'banner sim'; banner.textContent = 'Simulated cross section'; $('csTitle').textContent = 'Simulated river cross-section'; return; }
+    const s = SITE.site, sp = SPECIES[SITE.sp], T = tables(p.rangeM), n = SITE.n;
+    const verts = [...new Set(s.x)].sort((a, b) => a - b), nSurf = s.depth.filter(d => d === 0).length, nDeep = n - nSurf;
+    const gaps = verts.slice(1).map((v, i) => v - verts[i]).sort((a, b) => a - b), spacing = gaps[Math.floor(gaps.length / 2)];
+    const cvInd = cvRandom(p.cvSite, n), cvAs = cvPositions(p.cvSite, s.x, p.widthM, p.p, T);
+    const nInd = nRandom(p.cvSite, p.cvTarget), nStr = nStrat(p.cvSite, p.cvTarget, p.widthM, p.p, T, 2000);
+    const zeros = SITE.vals.filter(v => v === 0).length, sorted = [...SITE.vals].sort((a, b) => b - a), top3 = (sorted[0] + sorted[1] + sorted[2]) / SITE.vals.reduce((a, b) => a + b, 0);
+    const seCV = p.cvSite / Math.sqrt(2 * n) * Math.sqrt(1 + 2 * p.cvSite ** 2);
+    const verdict = cvAs <= p.cvTarget
+      ? `<span class="ok">This meets the target CV of ${p.cvTarget.toFixed(2)}.</span> The smallest design that would also meet it is about n<sub>strat</sub> = ${fmtN(nStr)} evenly spaced samples (n<sub>ind</sub> = ${nInd} if treated as independent).`
+      : `<span class="short">This misses the target CV of ${p.cvTarget.toFixed(2)}.</span> Reaching it would take about n<sub>strat</sub> = ${fmtN(nStr)} evenly spaced samples (n<sub>ind</sub> = ${nInd} if treated as independent)${nStr ? `, ${nStr - n > 0 ? nStr - n + ' more than were taken' : 'fewer than were taken, once the layout is spread evenly'}` : ''}.`;
+    const speciesNote = SITE.sp === 'ot'
+      ? `In the fitted model <i>O. tshawytscha</i> concentration fell with depth, so a surface-only design would overestimate the section mean. Mixing surface and depth samples, as done here, matters more for this species than spreading them across the width.`
+      : `No covariate explained <i>C. shasta</i> concentration; its variation was spatial autocorrelation (p = 0.60, range about 50 m) and noise. Spreading samples across the width is the main lever for precision.`;
+    banner.className = 'banner site'; banner.innerHTML = `Klamath site ${s.id} (${s.code}) &middot; ${sp.html} &middot; sampled 2021`;
+    $('csTitle').innerHTML = `Site ${s.id}: concentration smoothed from the ${n} measured samples, with simulated error between them`;
+    box.style.display = '';
+    box.innerHTML = `<h3>Site ${s.id} (${s.code}), ${sp.html}: what the 2021 sampling of Keel et al. (2026) achieved</h3>
+      <p><b>Design.</b> ${n} one-liter samples on ${verts.length} verticals about ${spacing} m apart across a ${s.W} m wide section: ${nSurf} surface grabs and ${nDeep} samples at depth. Measured mean ${fmtNum(SITE.mean)} copies/L, site CV ${p.cvSite.toFixed(2)}${zeros ? `; ${zeros} of the ${n} samples had no detectable ${sp.html}` : ''}. The three highest samples hold ${Math.round(top3 * 100)}% of the summed concentration.</p>
+      <p><b>Precision reached.</b> Treating the samples as independent, the CV of the estimated section mean is ${cvInd.toFixed(3)} (= ${p.cvSite.toFixed(2)} / &radic;${n}). Using the positions actually sampled and the species' autocorrelation (p = ${p.p.toFixed(2)}, range ${p.rangeM} m), it is ${cvAs.toFixed(3)}. ${verdict}</p>
+      <p><b>What this section says.</b> ${speciesNote}</p>
+      <p><b>Limits of this reading.</b></p>
+      <ul>
+        <li>The site CV is estimated from these ${n} samples and is itself uncertain (standard error roughly &plusmn;${seCV.toFixed(2)}); the required n scales with its square.</li>
+        <li><i>p</i> and the range are species-level estimates pooled across the six sites, not estimates for this section.</li>
+        <li>The samples come from one day. The numbers describe the section mean on that day, not day-to-day change or the reach mean (see n<sub>adj</sub>).</li>
+        <li>The precision model is one-dimensional across the width, so paired surface and depth samples on a vertical count as one position; the as-sampled CV is conservative and the independence value is the optimistic bound.</li>
+        <li>The site CV includes ddPCR measurement error and the volume filtered, which differed among samples.</li>
+      </ul>`;
+  }
+
+  // ---------- contour maps ----------
+  const CV_SEQ = []; for (let v = 0.10; v <= 1.5001; v += 0.025) CV_SEQ.push(+v.toFixed(3));
+  const W_SEQ = []; for (let w = 5; w <= 150.001; w += 2.5) W_SEQ.push(w);
+  const N_TICKS = [1, 2, 3, 5, 10, 15, 20, 30, 50, 100, 250, 500];
+  let contourPanels = 0;
+  function contourPanel(z, title, p, showScale) {
+    const zLog = z.map(row => row.map(v => v === null ? null : Math.log10(v)));
+    const contour = { type: 'contour', x: CV_SEQ, y: W_SEQ, z: zLog, colorscale: 'Viridis', reversescale: true, connectgaps: false, autocontour: false, contours: { start: 0, end: Math.log10(500), size: 0.15, coloring: 'fill', showlines: true }, line: { color: 'rgba(255,255,255,0.6)', width: 0.6 }, zmin: 0, zmax: Math.log10(500), showscale: showScale, colorbar: { title: { text: 'Required<br>samples (n)', side: 'right' }, thickness: 14, len: 0.9, tickvals: N_TICKS.map(v => Math.log10(v)), ticktext: N_TICKS.map(String) }, customdata: z, hovertemplate: 'site CV = %{x:.2f}<br>width = %{y:.1f} m<br>n = %{customdata}<extra></extra>' };
+    const mark = { type: 'scatter', mode: 'markers', x: [p.cvSite], y: [p.widthM], marker: { size: 11, color: 'white', line: { color: '#111', width: 1.6 } }, hovertemplate: 'current setting<extra></extra>', showlegend: false };
+    const others = [];
+    if (MODE === 'site') {
+      const sp = SITE.sp, st = SITES.map(s => { const v = s[sp]; return { id: s.id, cv: sd(v) / mean(v), W: s.W }; });
+      others.push({ type: 'scatter', mode: 'markers+text', x: st.map(s => s.cv), y: st.map(s => s.W), text: st.map(s => String(s.id)), textposition: 'top center', textfont: { size: 10, color: 'white' }, marker: { size: 7, color: 'white', opacity: 0.85, line: { color: '#111', width: 0.8 } }, hovertemplate: 'site %{text}: CV %{x:.2f}, width %{y} m<extra></extra>', showlegend: false });
+    }
+    const anyNull = z.some(r => r.some(v => v === null));
+    const layout = { height: p.layout === 'two' ? 400 : 340, margin: { l: 56, r: showScale ? 80 : 16, t: 36, b: 46 }, title: { text: title, x: 0.02, xanchor: 'left', font: { size: 13, color: '#1a5276' } }, xaxis: { title: 'Site CV (σ/μ)', range: [0.10, 1.50], zeroline: false }, yaxis: { title: 'Cross-section width (m)', range: [5, 150], zeroline: false }, plot_bgcolor: '#dcdcdc', paper_bgcolor: 'white', annotations: anyNull ? [{ x: 1.48, y: 147, xanchor: 'right', yanchor: 'top', showarrow: false, text: `grey = more than ${p.nMax} samples`, font: { size: 10.5, color: '#444' } }] : [] };
+    return { data: [contour, ...others, mark], layout };
+  }
+  function renderContour(p) {
+    const T = tables(p.rangeM);
+    const scen = p.layout === 'two'
+      ? [{ pp: 0, d: 'random', title: 'A)  Simple random placement (any width)' }, { pp: p.p, d: 'stratified', title: `B)  Spatially stratified, p = ${p.p.toFixed(2)}` }]
+      : [{ pp: 0, d: 'random', title: 'A)  Simple random placement (any width)' }, { pp: 0.25, d: 'stratified', title: 'B)  Spatially stratified, p = 0.25' }, { pp: 0.5, d: 'stratified', title: 'C)  Spatially stratified, p = 0.50' }, { pp: 0.75, d: 'stratified', title: 'D)  Spatially stratified, p = 0.75' }];
+    const grid = $('contourGrid');
+    if (contourPanels !== scen.length) { grid.innerHTML = ''; scen.forEach((s, i) => { const d = document.createElement('div'); d.className = 'cpanel'; d.id = 'cpanel' + i; grid.appendChild(d); }); contourPanels = scen.length; }
+    scen.forEach((s, i) => { const z = nGrid(CV_SEQ, W_SEQ, p.cvTarget, s.pp, T, s.d, p.nMax); const { data, layout } = contourPanel(z, s.title, p, i === scen.length - 1); Plotly.react('cpanel' + i, data, layout, { responsive: true, displayModeBar: false }); });
+    $('contourSettings').innerHTML = `<b>Target CV:</b> ${p.cvTarget.toFixed(2)}<br><b>Range:</b> ${p.rangeM} m<br><b>Marker:</b> site CV = ${p.cvSite.toFixed(2)}, width = ${p.widthM} m`;
+  }
+
+  // ---------- wiring ----------
+  function updateLabels() {
+    $('vCvSite').textContent = (+$('cv_site').value).toFixed(2);
+    $('vP').textContent = (+$('p').value).toFixed(2);
+    $('vRange').textContent = $('range_m').value;
+    $('vWidth').textContent = $('width_m').value;
+    $('vCvT').textContent = (+$('cv_target').value).toFixed(2);
+    $('vN').textContent = $('n_given').value;
+    $('vNmax').textContent = $('n_max_contour').value;
+  }
+  function update() { updateLabels(); const p = getP(); renderCS(p); renderCV(p); renderResults(p); renderInterp(p); renderContour(p); }
+  // controls that describe the section or the design: changing one leaves the site and returns to a simulated section
+  const revert = () => { if (MODE === 'site') leaveSite(); else update(); };
+  ['cv_site', 'p', 'range_m', 'width_m', 'n_given'].forEach(id => $(id).addEventListener('input', revert));
+  $('mean_conc').addEventListener('change', revert);
+  document.querySelectorAll('input[name="strategy"]').forEach(el => el.addEventListener('change', () => { if (MODE === 'site' && el.value !== 'sampled') leaveSite(); else update(); }));
+  ['cv_target', 'n_max_contour'].forEach(id => $(id).addEventListener('input', update));
+  document.querySelectorAll('input[name="clayout"]').forEach(el => el.addEventListener('change', update));
+  document.querySelectorAll('input[name="mode"]').forEach(el => el.addEventListener('change', () => el.value === 'site' ? enterSite() : leaveSite()));
+  ['site_sel', 'sp_sel'].forEach(id => $(id).addEventListener('change', enterSite));
+  $('resim').addEventListener('click', () => { SIM_SEED = (Math.random() * 1e9) | 0; update(); });
+  // the instructions remember whether they were closed
+  try { if (localStorage.getItem('edna_howto_closed') === '1') $('howto').removeAttribute('open'); } catch (e) {}
+  $('howto').addEventListener('toggle', () => { try { localStorage.setItem('edna_howto_closed', $('howto').open ? '0' : '1'); } catch (e) {} });
+  update();
+  </script>
+</body>
+</html>

@@ -1,3 +1,10 @@
+## Helper functions for predictions and effect plots from INLA models, used by
+## Main_Analysis_and_Figures.R: newDat.lincomb() builds the linear combinations
+## for each covariate, inlaPredict() refits the model with them, and inlaPlot()
+## draws the predicted effects. Carried over from the thesis analysis; the only
+## change is in inlaPredict(), where the environment of the stored model formula
+## is reset before refitting so the SPDE object is found.
+
 inlaDat <- function(mdl){
   mdlForm <- mdl$.args$formula
   mdlterms <- attr(terms(mdlForm), 'term.labels')
@@ -298,6 +305,9 @@ inlaPredict <- function(mdl, mdl.stack, spatialMod,
   fam <- mdl$.args$family
   #extract the model formula and determine the covariates that are included in the model
   mdlForm <- mdl$.args$formula 
+  # the formula stored in the fitted model does not keep the environment the
+  # spde object lives in, so point it back at the workspace before refitting
+  environment(mdlForm) <- globalenv()
   
   # run the newDat.lincomb function to make the linear combinations that will
   # be used to make predictions for each covariate in the model

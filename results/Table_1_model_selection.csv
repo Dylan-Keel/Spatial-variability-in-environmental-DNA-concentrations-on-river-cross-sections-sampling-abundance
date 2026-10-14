@@ -1,0 +1,17 @@
+"model","transferability.cs","selected.cs","transferability.ot","selected.ot"
+"Depth-Squared + Depth + Distance From Shore",0.55,FALSE,0.43,FALSE
+"Depth-Squared + Depth + Velocity",0.55,FALSE,0.41,FALSE
+"Depth + Velocity",0.55,FALSE,0.41,FALSE
+"Depth + Distance From Shore",0.55,FALSE,0.42,FALSE
+"Depth-Squared + Depth + Distance From Thalweg",0.54,FALSE,0.43,FALSE
+"Depth-Squared + Depth",0.54,FALSE,0.41,FALSE
+"Depth",0.54,FALSE,0.41,TRUE
+"Depth + Distance From Thalweg",0.54,FALSE,0.42,FALSE
+"Velocity + Sample Type",0.54,FALSE,0.42,FALSE
+"Distance From Shore + Sample Type",0.54,FALSE,0.44,FALSE
+"Sample Type",0.54,FALSE,0.42,TRUE
+"Velocity",0.53,FALSE,0.36,FALSE
+"Distance From Thalweg + Sample Type",0.53,FALSE,0.43,FALSE
+"Distance From Shore",0.52,FALSE,0.38,FALSE
+"NULL",0.52,TRUE,0.36,FALSE
+"Distance From Thalweg",0.51,FALSE,0.37,FALSE
