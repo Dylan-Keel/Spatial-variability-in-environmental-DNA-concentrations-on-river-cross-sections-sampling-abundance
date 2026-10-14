@@ -17,7 +17,7 @@ R_code/     Main_Analysis_and_Figures.R   the complete analysis, every figure, a
 data/       the 192 water samples with ddPCR results (CSD.csv), field data, and the saved
             cross-validation results
 figures/    Figures 1 to 8 as 600 dpi PNG (vector PDF copies in figures/pdf/), the Supporting
-            Information figures S1 to S14 in figures/supporting_information/, and the captions
+            Information figures S1 to S13 in figures/supporting_information/, and the captions
 results/    results tables, model summaries, the analysis cache, and the session information
 ```
 

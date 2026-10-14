@@ -122,11 +122,7 @@
         <div class="res-col">
           <div class="panel-title">Samples needed for the target CV</div><div id="nRequired"></div><br>
           <div class="panel-title">Precision with the given n</div><div id="cvAchieved"></div>
-          <div class="result-box" style="border-left-color:#7f8c8d; background:#f4f6f7">
-  <b>Which mean are you estimating?</b><br>
-  <b>Section mean</b> (n<sub>ind</sub>, n<sub>strat</sub>): the mean concentration on this cross section on the day it is sampled. Variation that every sample on the section shares is part of what you are measuring, so adding samples keeps improving precision.<br>
-  <b>Reach mean</b> (n<sub>adj</sub>): using this one section to stand for a longer reach of river. The section-wide deviation is then error that more samples on the same section cannot remove, so precision levels off at CV<sub>site</sub>&radic;(&rho;/(1&minus;&rho;)). Only sampling more sections reduces it.
-</div>
+
         </div>
       </div>
       <div id="siteInterp" class="interp" style="display:none"></div>
@@ -152,8 +148,8 @@
           <dt>Simple random placement</dt><dd>CV(n) = CV<sub>site</sub> / &radic;n, so n = (CV<sub>site</sub> / CV<sub>target</sub>)&sup2; (Cochran 1977). This is the manuscript's formula.</dd>
           <dt>Spatially stratified placement</dt><dd>Samples at the centres of n equal strata across the width. Evenly spaced samples converge on the section average, so precision improves faster than 1/&radic;n when the field is autocorrelated. The gain depends on <i>p</i> and on the correlation range relative to the width; it disappears when the range is much larger or much smaller than the section.</dd>
           <dt>As sampled</dt><dd>The same calculation with the positions actually sampled across the width. The precision model is one-dimensional, so paired surface and depth samples on one vertical count as one position.</dd>
-          <dt>Intraclass correlation &rho;</dt><dd>&rho; = <i>p</i> &times; <i>c&#772;</i>, where <i>c&#772;</i> is the mean Mat&eacute;rn correlation between two random positions on the section. It is shown in the sidebar for the current width and range.</dd>
-          <dt>Reach mean (design effect)</dt><dd>If the target is the mean of the reach rather than of the sampled section, the deviation shared by all samples on the section is error: CV(n) = CV<sub>site</sub> &radic;[(1 + (n &minus; 1)&rho;) / (n(1 &minus; &rho;))], which levels off at CV<sub>site</sub> &radic;(&rho; / (1 &minus; &rho;)). Only more sections reduce it.</dd>
+          <dt>Intraclass correlation &rho;</dt><dd>&rho; = <i>p</i> &times; <i>c&#772;</i>, where <i>c&#772;</i> is the mean Mat&eacute;rn correlation between two random positions on the section. It summarises how alike two samples on the section are and is shown in the sidebar for the current width and range.</dd>
+          <dt>What is being estimated</dt><dd>The mean concentration on the sampled cross section on the day it is sampled. Variation shared by every sample on the section is part of that mean, so adding samples keeps improving precision. The page says nothing about how well one section represents a longer reach of river; that takes more sections, not more samples on one.</dd>
           <dt>Simulated field</dt><dd>A log-normal field with the chosen mean and site CV, a share <i>p</i> of its log-variance spatially correlated with the chosen range. The simulated channel is 3 m deep at the thalweg.</dd>
           <dt>Klamath site field</dt><dd>A kriging smoother of the measured concentrations, with the species' <i>p</i> and range, plus a simulated residual drawn with the kriging variance (a conditional simulation, truncated at zero). It follows the samples where they were taken, within the nugget, and carries realistic error between them; re-simulate redraws only the error. Hover shows both the smoothed value and the value with error. Colours run from zero to the highest measured sample. The channel follows the sampled verticals.</dd>
           <dt>Klamath sites</dt><dd>The six cross sections of Keel et al. (2026), sampled in 2021 and numbered from upstream to downstream. Site CV, mean, width, and sample positions are the measured values; <i>p</i> and the range are the species-level estimates from the fitted spatial models (<i>C. shasta</i>: p = 0.60, range about 50 m; <i>O. tshawytscha</i>: p = 0.33, range about 14 m).</dd>
@@ -212,14 +208,11 @@
   const cvRandom = (cvS, n) => cvS / Math.sqrt(n);
   const cvStrat  = (cvS, n, W, p, T) => p <= 0 ? cvS / Math.sqrt(n) : cvS * Math.sqrt((p * aStratified(n, W, T) + (1 - p) / n) / (1 - p * cbarRandom(W, T)));
   const cvPositions = (cvS, xs, W, p, T) => p <= 0 ? cvS / Math.sqrt(xs.length) : cvS * Math.sqrt((p * aPositions(xs, W, T) + (1 - p) / xs.length) / (1 - p * cbarRandom(W, T)));
-  const cvReach  = (cvS, n, W, p, T) => { const rho = p * cbarRandom(W, T); return cvS * Math.sqrt((1 + (n - 1) * rho) / (n * (1 - rho))); };
   const nRandom  = (cvS, cvT) => Math.ceil((cvS / cvT) ** 2);
   function nStrat(cvS, cvT, W, p, T, nMax) { let best = Infinity; for (let n = 1; n <= nMax; n++) { const f = cvStrat(1, n, W, p, T); if (f < best) best = f; if (best <= cvT / cvS) return n; } return null; }
-  function nReach(cvS, cvT, W, p, T, nMax) { const rho = p * cbarRandom(W, T), den = (cvT / cvS) ** 2 * (1 - rho) - rho; if (den <= 0) return null; const n = Math.ceil((1 - rho) / den); return n > nMax ? null : n; }
   function nGrid(cvSeq, wSeq, cvT, p, T, design, nMax) {
     return wSeq.map(W => cvSeq.map(cv => {
       if (design === 'random') { const n = nRandom(cv, cvT); return n > nMax ? null : n; }
-      if (design === 'reach') return nReach(cv, cvT, W, p, T, nMax);
       return nStrat(cv, cvT, W, p, T, nMax);
     }));
   }
@@ -361,8 +354,7 @@
     const T = tables(p.rangeM), ns = []; for (let n = 1; n <= 60; n++) ns.push(n);
     const mk = (name, vals, color, dash) => ({ type: 'scatter', mode: 'lines', name, x: ns, y: vals, line: { color, width: 2.2, dash } });
     const traces = [mk('Simple random (independence)', ns.map(n => cvRandom(p.cvSite, n)), '#0072B2', 'solid'),
-                    mk('Spatially stratified', ns.map(n => cvStrat(p.cvSite, n, p.widthM, p.p, T)), '#009E73', 'dash'),
-                    mk('Reach mean (autocorrelation-adjusted)', ns.map(n => cvReach(p.cvSite, n, p.widthM, p.p, T)), '#D55E00', 'dot')];
+                    mk('Spatially stratified', ns.map(n => cvStrat(p.cvSite, n, p.widthM, p.p, T)), '#009E73', 'dash')];
     if (MODE === 'site') traces.push({ type: 'scatter', mode: 'markers', name: `As sampled in 2021 (n = ${SITE.n})`, x: [SITE.n], y: [cvPositions(p.cvSite, SITE.site.x, p.widthM, p.p, T)], marker: { size: 12, color: '#1a5276', symbol: 'diamond', line: { color: 'white', width: 1.5 } } });
     const yMax = Math.min(p.cvSite * 1.3, 2.5);
     const layout = { height: 280, margin: { l: 58, r: 24, t: 8, b: 72 }, xaxis: { title: 'Number of 1-L samples (n)', range: [1, 60], zeroline: false, tickvals: [1, 10, 20, 30, 40, 50, 60] }, yaxis: { title: 'CV of the estimated mean', range: [0, yMax], zeroline: false }, legend: { orientation: 'h', x: 0.5, xanchor: 'center', y: -0.25, font: { size: 12 } }, plot_bgcolor: 'white', paper_bgcolor: 'white',
@@ -375,9 +367,9 @@
   function renderResults(p) {
     const T = tables(p.rangeM), rho = p.p * cbarRandom(p.widthM, T);
     $('iccBox').innerHTML = `<b>Implied intraclass correlation</b> for this width and range:<br>&rho; = p &times; c&#772; = ${rho.toFixed(2)}`;
-    $('nRequired').innerHTML = `<div class="result-box"><b>Simple random, n<sub>ind</sub>:</b> ${fmtN(nRandom(p.cvSite, p.cvTarget))}<br><b>Spatially stratified, n<sub>strat</sub>:</b> ${fmtN(nStrat(p.cvSite, p.cvTarget, p.widthM, p.p, T, 2000))}<br><small>Reach mean, autocorrelation-adjusted n<sub>adj</sub>: ${fmtN(nReach(p.cvSite, p.cvTarget, p.widthM, p.p, T, 2000))}</small></div>`;
+    $('nRequired').innerHTML = `<div class="result-box"><b>Simple random, n<sub>ind</sub>:</b> ${fmtN(nRandom(p.cvSite, p.cvTarget))}<br><b>Spatially stratified, n<sub>strat</sub>:</b> ${fmtN(nStrat(p.cvSite, p.cvTarget, p.widthM, p.p, T, 2000))}</div>`;
     const sampled = MODE === 'site' ? `<b>As sampled (n = ${SITE.n}):</b> ${cvPositions(p.cvSite, SITE.site.x, p.widthM, p.p, T).toFixed(3)}<br>` : '';
-    $('cvAchieved').innerHTML = `<div class="result-box">${sampled}<b>Simple random:</b> ${cvRandom(p.cvSite, p.nGiven).toFixed(3)}<br><b>Spatially stratified:</b> ${cvStrat(p.cvSite, p.nGiven, p.widthM, p.p, T).toFixed(3)}<br><small>Reach mean, design effect: ${cvReach(p.cvSite, p.nGiven, p.widthM, p.p, T).toFixed(3)}</small></div>`;
+    $('cvAchieved').innerHTML = `<div class="result-box">${sampled}<b>Simple random:</b> ${cvRandom(p.cvSite, p.nGiven).toFixed(3)}<br><b>Spatially stratified:</b> ${cvStrat(p.cvSite, p.nGiven, p.widthM, p.p, T).toFixed(3)}</div>`;
   }
 
   // ---------- interpretation of a Klamath site ----------
@@ -408,7 +400,7 @@
       <ul>
         <li>The site CV is estimated from these ${n} samples and is itself uncertain (standard error roughly &plusmn;${seCV.toFixed(2)}); the required n scales with its square.</li>
         <li><i>p</i> and the range are species-level estimates pooled across the six sites, not estimates for this section.</li>
-        <li>The samples come from one day. The numbers describe the section mean on that day, not day-to-day change or the reach mean (see n<sub>adj</sub>).</li>
+        <li>The samples come from one day. The numbers describe the mean of this cross section on that day, not day-to-day change and not a longer reach of river.</li>
         <li>The precision model is one-dimensional across the width, so paired surface and depth samples on a vertical count as one position; the as-sampled CV is conservative and the independence value is the optimistic bound.</li>
         <li>The site CV includes ddPCR measurement error and the volume filtered, which differed among samples.</li>
       </ul>`;

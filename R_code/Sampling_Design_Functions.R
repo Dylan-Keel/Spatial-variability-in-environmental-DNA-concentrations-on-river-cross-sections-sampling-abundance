@@ -85,10 +85,6 @@ cv_positions   <- function(cv_site, xs, W, p, tab) {
   if (p <= 0) return(cv_site / sqrt(n))
   cv_site * sqrt((p * A_positions(xs, W, tab) + (1 - p) / n) / (1 - p * cbar_random(W, tab)))
 }
-cv_reach       <- function(cv_site, n, W, p, tab) {
-  rho <- p * cbar_random(W, tab)
-  cv_site * sqrt((1 + (n - 1) * rho) / (n * (1 - rho)))
-}
 icc_section    <- function(W, p, tab) p * cbar_random(W, tab)
 
 # ---- n required ---------------------------------------------------------------
@@ -102,14 +98,6 @@ n_random <- function(cv_site, cv_target) ceiling((cv_site / cv_target)^2)
 n_stratified <- function(cv_site, cv_target, W, p, tab, n_max = 500) {
   f <- cv_stratified(1, seq_len(n_max), W, p, tab)
   .first_crossing(f, cv_target / cv_site)
-}
-n_reach <- function(cv_site, cv_target, W, p, tab, n_max = 500) {
-  rho <- p * cbar_random(W, tab)
-  r2  <- (cv_target / cv_site)^2
-  den <- r2 * (1 - rho) - rho
-  out <- ifelse(den > 0, ceiling((1 - rho) / den), NA_real_)
-  out[!is.na(out) & out > n_max] <- NA_real_
-  out
 }
 
 # Grid of required n over CV_site x width.  design = "random" | "stratified" | "reach"

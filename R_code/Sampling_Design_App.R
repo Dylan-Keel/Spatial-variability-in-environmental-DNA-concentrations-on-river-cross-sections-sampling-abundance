@@ -184,11 +184,7 @@ ui <- fluidPage(
         column(8, uiOutput("cs_title"), plotOutput("cross_section", height = "240px")),
         column(4, br(), div(class = "panel-title", "Samples needed for the target CV"), uiOutput("n_required"),
                br(), div(class = "panel-title", "Precision (CV of the estimated mean) with the given n"), uiOutput("cv_achieved"),
-               HTML('<div class="result-box" style="border-left-color:#7f8c8d; background:#f4f6f7">
-  <b>Which mean are you estimating?</b><br>
-  <b>Section mean</b> (n<sub>ind</sub>, n<sub>strat</sub>): the mean concentration on this cross section on the day it is sampled. Variation that every sample on the section shares is part of what you are measuring, so adding samples keeps improving precision.<br>
-  <b>Reach mean</b> (n<sub>adj</sub>): using this one section to stand for a longer reach of river. The section-wide deviation is then error that more samples on the same section cannot remove, so precision levels off at CV<sub>site</sub>&radic;(&rho;/(1&minus;&rho;)). Only sampling more sections reduces it.
-</div>'))
+NULL)
       ),
       uiOutput("site_interp"),
       hr(),
@@ -216,9 +212,9 @@ ui <- fluidPage(
               tags$dt("As sampled"),
               tags$dd("The same calculation with the positions actually sampled across the width. The precision model is one-dimensional, so paired surface and depth samples on one vertical count as one position."),
               tags$dt(HTML("Intraclass correlation &rho;")),
-              tags$dd(HTML("&rho; = <i>p</i> &times; <i>c&#772;</i>, where <i>c&#772;</i> is the mean Mat&eacute;rn correlation between two random positions on the section. It is shown in the sidebar for the current width and range.")),
-              tags$dt("Reach mean (design effect)"),
-              tags$dd(HTML("If the target is the mean of the reach rather than of the sampled section, the deviation shared by all samples on the section is error: CV(n) = CV<sub>site</sub> &radic;[(1 + (n &minus; 1)&rho;) / (n(1 &minus; &rho;))], which levels off at CV<sub>site</sub> &radic;(&rho; / (1 &minus; &rho;)). Only more sections reduce it.")),
+              tags$dd(HTML("&rho; = <i>p</i> &times; <i>c&#772;</i>, where <i>c&#772;</i> is the mean Mat&eacute;rn correlation between two random positions on the section. It summarises how alike two samples on the section are and is shown in the sidebar for the current width and range.")),
+              tags$dt("What is being estimated"),
+              tags$dd("The mean concentration on the sampled cross section on the day it is sampled. Variation shared by every sample on the section is part of that mean, so adding samples keeps improving precision. The page says nothing about how well one section represents a longer reach of river; that takes more sections, not more samples on one."),
               tags$dt("Simulated field"),
               tags$dd(HTML("A log-normal field with the chosen mean and site CV, a share <i>p</i> of its log-variance spatially correlated with the chosen range. The simulated channel is 3 m deep at the thalweg.")),
               tags$dt("Klamath site field"),
@@ -307,11 +303,9 @@ server <- function(input, output, session) {
   output$n_required <- renderUI({
     n_r <- n_random(input$cv_site, input$cv_target)
     n_s <- n_stratified(input$cv_site, input$cv_target, input$width_m, input$p, tab(), n_max = 2000)
-    n_h <- n_reach(input$cv_site, input$cv_target, input$width_m, input$p, tab(), n_max = 2000)
     HTML(paste0('<div class="result-box">',
                 '<b>Simple random, n<sub>ind</sub>:</b> ', fmt_n(n_r), '<br>',
-                '<b>Spatially stratified, n<sub>strat</sub>:</b> ', fmt_n(n_s), '<br>',
-                '<small style="color:#555">Reach mean, autocorrelation-adjusted n<sub>adj</sub>: ', fmt_n(n_h), '</small></div>'))
+                '<b>Spatially stratified, n<sub>strat</sub>:</b> ', fmt_n(n_s), '</div>'))
   })
 
   output$cv_achieved <- renderUI({
@@ -319,8 +313,7 @@ server <- function(input, output, session) {
     sampled <- if (in_site()) sprintf('<b>As sampled (n = %d):</b> %.3f<br>', site()$n, cv_positions(input$cv_site, site()$samples$x, input$width_m, input$p, tab())) else ""
     HTML(paste0('<div class="result-box">', sampled,
                 '<b>Simple random:</b> ', round(cv_random(input$cv_site, n), 3), '<br>',
-                '<b>Spatially stratified:</b> ', round(cv_stratified(input$cv_site, n, input$width_m, input$p, tab()), 3), '<br>',
-                '<small style="color:#555">Reach mean, design effect: ', round(cv_reach(input$cv_site, n, input$width_m, input$p, tab()), 3), '</small></div>'))
+                '<b>Spatially stratified:</b> ', round(cv_stratified(input$cv_site, n, input$width_m, input$p, tab()), 3), '</div>'))
   })
 
   ## ---- what the 2021 sampling achieved at the chosen site ----
@@ -351,7 +344,7 @@ server <- function(input, output, session) {
       '<p><b>Limits of this reading.</b></p><ul>',
       sprintf('<li>The site CV is estimated from these %d samples and is itself uncertain (standard error roughly &plusmn;%.2f); the required n scales with its square.</li>', n, se_cv),
       '<li><i>p</i> and the range are species-level estimates pooled across the six sites, not estimates for this section.</li>',
-      '<li>The samples come from one day. The numbers describe the section mean on that day, not day-to-day change or the reach mean (see n<sub>adj</sub>).</li>',
+      '<li>The samples come from one day. The numbers describe the mean of this cross section on that day, not day-to-day change and not a longer reach of river.</li>',
       '<li>The precision model is one-dimensional across the width, so paired surface and depth samples on a vertical count as one position; the as-sampled CV is conservative and the independence value is the optimistic bound.</li>',
       '<li>The site CV includes ddPCR measurement error and the volume filtered, which differed among samples.</li>',
       '</ul></div>'))
@@ -361,9 +354,8 @@ server <- function(input, output, session) {
     n_seq <- 1:60
     df <- rbind(
       data.frame(n = n_seq, CV = cv_random(input$cv_site, n_seq), type = "Simple random (independence)"),
-      data.frame(n = n_seq, CV = cv_stratified(input$cv_site, n_seq, input$width_m, input$p, tab()), type = "Spatially stratified"),
-      data.frame(n = n_seq, CV = cv_reach(input$cv_site, n_seq, input$width_m, input$p, tab()), type = "Reach mean (autocorrelation-adjusted)"))
-    df$type <- factor(df$type, levels = c("Simple random (independence)", "Spatially stratified", "Reach mean (autocorrelation-adjusted)"))
+      data.frame(n = n_seq, CV = cv_stratified(input$cv_site, n_seq, input$width_m, input$p, tab()), type = "Spatially stratified"))
+    df$type <- factor(df$type, levels = c("Simple random (independence)", "Spatially stratified"))
     y_max <- min(input$cv_site * 1.3, 2.5)
     g <- ggplot(df, aes(x = n, y = CV, colour = type, linetype = type)) +
       geom_hline(yintercept = input$cv_target, linetype = "dashed", colour = "grey30") +
@@ -375,8 +367,8 @@ server <- function(input, output, session) {
       g <- g + geom_point(data = pt, aes(x = n, y = CV), inherit.aes = FALSE, shape = 23, size = 4, fill = "#1a5276", colour = "white") +
         annotate("text", x = pt$n + 1, y = pt$CV + y_max * 0.06, label = sprintf("as sampled in 2021 (n = %d)", pt$n), hjust = 0, size = 3.5, colour = "#1a5276")
     }
-    g + scale_colour_manual(values = c("#0072B2", "#009E73", "#D55E00"), name = NULL) +
-      scale_linetype_manual(values = c("solid", "22", "dotted"), name = NULL) +
+    g + scale_colour_manual(values = c("#0072B2", "#009E73"), name = NULL) +
+      scale_linetype_manual(values = c("solid", "22"), name = NULL) +
       scale_x_continuous(limits = c(1, 60), breaks = seq(0, 60, 10), expand = expansion(mult = c(0, 0.01))) +
       coord_cartesian(ylim = c(0, y_max)) +
       labs(x = "Number of 1-L samples (n)", y = "CV of the estimated mean") +

@@ -44,6 +44,4 @@ Molecular Ecology publishes the supplement as Supporting Information with figure
 
 **Figure S13 (D, "Figure 11" in the draft).** *C. shasta* eDNA concentration on cross sections one and three, with a two-dimensional tensor spline surface (R package mgcv) showing the cline at site three. Points are site-scaled measured concentrations; the thick black line is the river bottom.
 
-**Figure S14 (new).** Figure 5 under a different target of inference: the mean concentration of the reach rather than of the sampled cross section. Solid lines are as in Figure 5. Dotted lines (*n*_adj, the autocorrelation-adjusted sample size) treat the samples on a section as one cluster drawn from the reach, CV(*n*) = CV_site √[(1 + (*n* − 1)ρ) / (*n*(1 − ρ))], where ρ is the intraclass correlation among samples on the section. The deviation shared by all samples on a section cannot be removed by adding samples to it, so precision levels off; only additional sections reduce it.
-
 Appendix B of the draft (limit of detection and quantification, Figures B1 to B6) comes from a separate analysis of the standard curves and is not produced by this code.

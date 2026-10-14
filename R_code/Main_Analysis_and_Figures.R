@@ -841,28 +841,6 @@ xs.spline <- function(site.n) {
 figD2 <- ggarrange(xs.spline(1), xs.spline(3), ncol = 1, nrow = 2, common.legend = TRUE, legend = "bottom")
 save_fig(figD2, "Figure_S13", w = FIG_W2, h = 7, dir = supp)
 
-## Figure S14: Figure 5 under the reach-mean estimand, in which the deviation
-## shared by all samples on a section is error that additional samples on that
-## section cannot reduce (design-effect adjustment for clustered samples, n_adj)
-curvesE <- site.stats %>% rowwise() %>% do({
-  s <- .; par <- species.par[[as.character(s$species)]]; tb <- matern.tab[[as.character(s$species)]]
-  bind_rows(data.frame(species = s$species, Site = s$Site, n = n.seq, CV = cv_random(s$cv, n.seq), estimand = "Section mean (n_ind)"),
-            data.frame(species = s$species, Site = s$Site, n = n.seq, CV = cv_reach(s$cv, n.seq, s$W, par$p, tb), estimand = "Reach mean (n_adj)"))
-}) %>% ungroup() %>%
-  mutate(species = factor(species, levels = names(COL_SPECIES)), Site = factor(Site, levels = 1:6),
-         estimand = factor(estimand, levels = c("Section mean (n_ind)", "Reach mean (n_adj)")))
-figE1 <- ggplot(curvesE, aes(x = n, y = CV, colour = Site, linetype = estimand)) +
-  geom_hline(data = ref.lines, aes(yintercept = CV), colour = "grey50", linetype = "dashed", linewidth = 0.5) +
-  geom_line(linewidth = 0.8) +
-  facet_wrap(~species, ncol = 1, scales = "free_y", labeller = sp_lab) +
-  scale_colour_manual(values = COL_SITES, name = "Site") +
-  scale_linetype_manual(values = c("solid", "dotted"), name = "Estimand") +
-  scale_x_continuous(limits = c(1, 60), breaks = seq(0, 60, 10), expand = expansion(mult = c(0, 0.02))) +
-  scale_y_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, NA)) +
-  labs(x = "Number of 1-L samples (n)", y = "Precision (CV of the estimated mean)") +
-  guides(colour = guide_legend(order = 1, nrow = 1), linetype = guide_legend(order = 2))
-save_fig(figE1, "Figure_S14", w = FIG_W2, h = 7.5, dir = supp)
-
 #### 8. save ####
 
 dev.off()
