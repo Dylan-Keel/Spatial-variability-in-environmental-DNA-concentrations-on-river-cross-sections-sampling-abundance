@@ -6,4 +6,4 @@
 
 `C.shasta.metar.new.rda` and `Chinook.metar.new.rda` are the saved results of the 100 repeats of 10-fold cross-validation used for model selection (validation R² for each of the sixteen candidate models, in each fold and repeat).
 
-Column-level metadata for these files will accompany the Dryad data release (FGDC format, compiled with the USGS MetadataWizard); the column names in `CSD.csv` are described in the comments of the main script where they are used.
+`metadata/` holds an FGDC (CSDGM) metadata record for each of the four files, with a definition, units, and range or code list for every column. The records validate against the FGDC schema and are the ones submitted with the Dryad data release.

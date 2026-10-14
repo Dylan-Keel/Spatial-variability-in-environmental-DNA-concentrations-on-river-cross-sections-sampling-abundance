@@ -1,0 +1,445 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+  <idinfo>
+    <citation>
+      <citeinfo>
+        <origin>Keel, Dylan J.</origin>
+        <origin>Som, Nicholas A.</origin>
+        <origin>Henderson, Mark J.</origin>
+        <origin>Kinziger, Andrew P.</origin>
+        <pubdate>2026</pubdate>
+        <title>2021FIELD_DATA_Klamath_Discharge.csv: Spatial variability in environmental DNA concentrations on river cross sections: implications for sampling design and abundance estimation</title>
+        <geoform>tabular digital data</geoform>
+        <pubinfo>
+          <pubplace>Online</pubplace>
+          <publish>Dryad (data release); code and data also at GitHub</publish>
+        </pubinfo>
+        <onlink>https://github.com/Dylan-Keel/Spatial-variability-in-environmental-DNA-concentrations-on-river-cross-sections-sampling-abundance</onlink>
+        <onlink>Dryad DOI to be assigned</onlink>
+      </citeinfo>
+    </citation>
+    <descript>
+      <abstract>Environmental DNA (eDNA) concentrations of the myxozoan parasite Ceratonova shasta (organismal eDNA, actinospores) and of Chinook salmon Oncorhynchus tshawytscha (extra-organismal eDNA) were measured by droplet digital PCR in 192 one-liter water samples collected on six cross sections of the Klamath River, California, 16 to 22 April 2021. On each cross section 15 to 19 verticals were sampled at the surface (grab) and at 60 percent of depth (US DH-59 isokinetic sampler), with water velocity, depth, and discharge measured at each vertical. The data support an analysis of within-cross-section variability of eDNA concentration, spatial generalized linear mixed models, and sample size calculations for estimating the mean eDNA concentration of a river cross section. This file holds the current-meter measurements used to compute discharge at each cross section.</abstract>
+      <purpose>To quantify spatial variability of eDNA concentration across river cross sections and to inform the number and placement of water samples needed to estimate the mean eDNA concentration of a cross section to a chosen precision.</purpose>
+      <supplinf>Companion to Keel, D. J., N. A. Som, M. J. Henderson, and A. P. Kinziger (in prep.), Spatial variability in environmental DNA concentrations on river cross sections: implications for sampling design and abundance estimation. Column definitions follow the usage in the analysis script. Site codes as used in the field; the manuscript numbers the sites 1 to 6 from upstream to downstream. Bounding coordinates are approximate.</supplinf>
+    </descript>
+    <timeperd>
+      <timeinfo>
+        <rngdates>
+          <begdate>20210416</begdate>
+          <enddate>20210422</enddate>
+        </rngdates>
+      </timeinfo>
+      <current>ground condition</current>
+    </timeperd>
+    <status>
+      <progress>Complete</progress>
+      <update>None planned</update>
+    </status>
+    <spdom>
+      <bounding>
+        <westbc>-123.25</westbc>
+        <eastbc>-122.40</eastbc>
+        <northbc>41.98</northbc>
+        <southbc>41.78</southbc>
+      </bounding>
+    </spdom>
+    <keywords>
+      <theme>
+        <themekt>None</themekt>
+        <themekey>environmental DNA</themekey>
+        <themekey>eDNA</themekey>
+        <themekey>droplet digital PCR</themekey>
+        <themekey>Ceratonova shasta</themekey>
+        <themekey>Oncorhynchus tshawytscha</themekey>
+        <themekey>Chinook salmon</themekey>
+        <themekey>river cross section</themekey>
+        <themekey>sampling design</themekey>
+        <themekey>spatial variability</themekey>
+      </theme>
+      <theme>
+        <themekt>USGS Thesaurus</themekt>
+        <themekey>environmental DNA</themekey>
+        <themekey>water sampling</themekey>
+        <themekey>fish parasites</themekey>
+      </theme>
+      <place>
+        <placekt>None</placekt>
+        <placekey>Klamath River</placekey>
+        <placekey>Siskiyou County</placekey>
+        <placekey>California</placekey>
+        <placekey>United States</placekey>
+      </place>
+    </keywords>
+    <accconst>None</accconst>
+    <useconst>None. Users are advised to read the associated publication and the repository README before using the data. Any use of trade, firm, or product names is for descriptive purposes only and does not imply endorsement by the U.S. Government.</useconst>
+  <ptcontac>
+    <cntinfo>
+      <cntperp>
+        <cntper>Dylan J. Keel</cntper>
+        <cntorg>Resource Environmental Solutions, LLC</cntorg>
+      </cntperp>
+      <cntaddr>
+        <addrtype>mailing address</addrtype>
+        <city>Sacramento</city>
+        <state>CA</state>
+        <postal>95818</postal>
+      </cntaddr>
+      <cntvoice>+1 (831) 227-1168</cntvoice>
+      <cntemail>dkeel@res.us</cntemail>
+    </cntinfo>
+  </ptcontac>
+    <datacred>Field work and laboratory analysis by Dylan J. Keel with volunteers from Cal Poly Humboldt; funded by the National Fish and Wildlife Foundation; boats and equipment from the U.S. Fish and Wildlife Service, Arcata, CA.</datacred>
+    <native>Comma-separated text; analysed with R 4.5.3 and R-INLA.</native>
+  </idinfo>
+  <dataqual>
+    <attracc>
+      <attraccr>ddPCR reactions with fewer than 10,000 accepted droplets or without clear separation of positive and negative droplets were rerun (less than 10 percent of reactions). A random subset of extracts (25 for C. shasta, 23 for O. tshawytscha) was run twice to assess measurement error. Limits of detection were 6.3 (C. shasta) and 11.8 (O. tshawytscha) copies per reaction; samples below the limit of detection are recorded as zero in the analysis. No-template controls and field blanks were below the limit of detection.</attraccr>
+    </attracc>
+    <logic>Each row is one water sample or one reaction. Sample identifiers link the field sheet, the ddPCR output, and the analysis dataset.</logic>
+    <complete>All 192 surface and depth water samples from the six cross sections are present in CSD.csv. The field sheet also lists depth-integrated samples and field blanks that were not used in the published analysis.</complete>
+    <lineage>
+      <procstep>
+        <procdesc>Water samples (target 1 L) were collected 16 to 22 April 2021 at 15 to 19 verticals on each of six cross sections of the Klamath River, one at the surface (Whirl-Pak bag) and one at 60 percent of depth (US DH-59 isokinetic sampler). Velocity (Price AA meter at 20 and 60 percent of depth), depth (sounding reel), and distance from the bank (tape on a static line) were recorded at each vertical; discharge was computed by the midsection method.</procdesc>
+        <procdate>202104</procdate>
+      </procstep>
+      <procstep>
+        <procdesc>Samples were filtered in the field within 10 hours (47 mm, 5 um cellulose nitrate). DNA was extracted by acetone dissolution of the filter followed by the Qiagen DNeasy Blood and Tissue protocol with a 100 uL final elution. Each 22 uL ddPCR reaction (Bio-Rad QX200) contained 15 uL of extract and species-specific primers and probes for C. shasta (HEX) and O. tshawytscha (FAM); Poisson-corrected copies per reaction were estimated by Bio-Rad QX Manager 1.2.</procdesc>
+        <procdate>2021</procdate>
+      </procstep>
+      <procstep>
+        <procdesc>Copies per liter of water were computed as copies per reaction x elution volume (uL) / 15 uL x volume filtered (mL) / 1000, in R_code/Main_Analysis_and_Figures.R of the repository.</procdesc>
+        <procdate>2023</procdate>
+      </procstep>
+    </lineage>
+  </dataqual>
+  <eainfo>
+    <detailed>
+      <enttyp>
+        <enttypl>2021FIELD_DATA_Klamath_Discharge.csv</enttypl>
+        <enttypd>Discharge measurement by the midsection method: one row per subsection (vertical) of each cross section (107 rows).</enttypd>
+        <enttypds>Producer defined</enttypds>
+      </enttyp>
+    <attr>
+      <attrlabl>subsection</attrlabl>
+      <attrdef>Subsection (vertical) number from the left bank.</attrdef>
+      <attrdefs>Producer defined</attrdefs>
+      <attrdomv>
+        <rdom>
+          <rdommin>0</rdommin>
+          <rdommax>20</rdommax>
+          <attrunit>subsection number</attrunit>
+        </rdom>
+      </attrdomv>
+    </attr>
+    <attr>
+      <attrlabl>Distance Left Bank meters</attrlabl>
+      <attrdef>Distance of the vertical from the left bank (looking downstream).</attrdef>
+      <attrdefs>Producer defined</attrdefs>
+      <attrdomv>
+        <rdom>
+          <rdommin>0</rdommin>
+          <rdommax>41.5</rdommax>
+          <attrunit>meters</attrunit>
+        </rdom>
+      </attrdomv>
+    </attr>
+    <attr>
+      <attrlabl>feet</attrlabl>
+      <attrdef>Distance of the vertical from the left bank.</attrdef>
+      <attrdefs>Producer defined</attrdefs>
+      <attrdomv>
+        <rdom>
+          <rdommin>0</rdommin>
+          <rdommax>136.155</rdommax>
+          <attrunit>feet</attrunit>
+        </rdom>
+      </attrdomv>
+    </attr>
+    <attr>
+      <attrlabl>Depth </attrlabl>
+      <attrdef>Total depth at the vertical, Ellsworth A-55 sounding reel (column name carries a trailing space in the file).</attrdef>
+      <attrdefs>Producer defined</attrdefs>
+      <attrdomv>
+        <rdom>
+          <rdommin>0</rdommin>
+          <rdommax>8.55</rdommax>
+          <attrunit>feet</attrunit>
+        </rdom>
+      </attrdomv>
+    </attr>
+    <attr>
+      <attrlabl>clicks .8</attrlabl>
+      <attrdef>Price AA current meter revolutions counted at 80 percent of depth.</attrdef>
+      <attrdefs>Producer defined</attrdefs>
+      <attrdomv>
+        <rdom>
+          <rdommin>0</rdommin>
+          <rdommax>60</rdommax>
+          <attrunit>revolutions</attrunit>
+        </rdom>
+      </attrdomv>
+    </attr>
+    <attr>
+      <attrlabl>seconds .8</attrlabl>
+      <attrdef>Timing interval for the count at 80 percent of depth.</attrdef>
+      <attrdefs>Producer defined</attrdefs>
+      <attrdomv>
+        <rdom>
+          <rdommin>0</rdommin>
+          <rdommax>45</rdommax>
+          <attrunit>seconds</attrunit>
+        </rdom>
+      </attrdomv>
+    </attr>
+    <attr>
+      <attrlabl>fps.8</attrlabl>
+      <attrdef>Velocity at 80 percent of depth from the meter rating.</attrdef>
+      <attrdefs>Producer defined</attrdefs>
+      <attrdomv>
+        <rdom>
+          <rdommin>0</rdommin>
+          <rdommax>4.4274</rdommax>
+          <attrunit>feet per second</attrunit>
+        </rdom>
+      </attrdomv>
+    </attr>
+    <attr>
+      <attrlabl>clicks .6</attrlabl>
+      <attrdef>Price AA current meter revolutions counted at 60 percent of depth.</attrdef>
+      <attrdefs>Producer defined</attrdefs>
+      <attrdomv>
+        <rdom>
+          <rdommin>0</rdommin>
+          <rdommax>79</rdommax>
+          <attrunit>revolutions</attrunit>
+        </rdom>
+      </attrdomv>
+    </attr>
+    <attr>
+      <attrlabl>seconds .6</attrlabl>
+      <attrdef>Timing interval for the count at 60 percent of depth.</attrdef>
+      <attrdefs>Producer defined</attrdefs>
+      <attrdomv>
+        <rdom>
+          <rdommin>0</rdommin>
+          <rdommax>50</rdommax>
+          <attrunit>seconds</attrunit>
+        </rdom>
+      </attrdomv>
+    </attr>
+    <attr>
+      <attrlabl>fps.6</attrlabl>
+      <attrdef>Velocity at 60 percent of depth from the meter rating.</attrdef>
+      <attrdefs>Producer defined</attrdefs>
+      <attrdomv>
+        <rdom>
+          <rdommin>0</rdommin>
+          <rdommax>5.82377</rdommax>
+          <attrunit>feet per second</attrunit>
+        </rdom>
+      </attrdomv>
+    </attr>
+    <attr>
+      <attrlabl>clicks.2</attrlabl>
+      <attrdef>Price AA current meter revolutions counted at 20 percent of depth.</attrdef>
+      <attrdefs>Producer defined</attrdefs>
+      <attrdomv>
+        <rdom>
+          <rdommin>0</rdommin>
+          <rdommax>94</rdommax>
+          <attrunit>revolutions</attrunit>
+        </rdom>
+      </attrdomv>
+    </attr>
+    <attr>
+      <attrlabl>seconds.2</attrlabl>
+      <attrdef>Timing interval for the count at 20 percent of depth.</attrdef>
+      <attrdefs>Producer defined</attrdefs>
+      <attrdomv>
+        <rdom>
+          <rdommin>0</rdommin>
+          <rdommax>40</rdommax>
+          <attrunit>seconds</attrunit>
+        </rdom>
+      </attrdomv>
+    </attr>
+    <attr>
+      <attrlabl>fps.2</attrlabl>
+      <attrdef>Velocity at 20 percent of depth from the meter rating (stored as text where blank).</attrdef>
+      <attrdefs>Producer defined</attrdefs>
+      <attrdomv>
+        <rdom>
+          <rdommin>0</rdommin>
+          <rdommax>6.92617</rdommax>
+          <attrunit>feet per second</attrunit>
+        </rdom>
+      </attrdomv>
+    </attr>
+    <attr>
+      <attrlabl>Width Interval</attrlabl>
+      <attrdef>Width of the subsection represented by the vertical (midsection method).</attrdef>
+      <attrdefs>Producer defined</attrdefs>
+      <attrdomv>
+        <rdom>
+          <rdommin>0</rdommin>
+          <rdommax>26.2467</rdommax>
+          <attrunit>feet</attrunit>
+        </rdom>
+      </attrdomv>
+    </attr>
+    <attr>
+      <attrlabl>Area</attrlabl>
+      <attrdef>Cross-sectional area of the subsection.</attrdef>
+      <attrdefs>Producer defined</attrdefs>
+      <attrdomv>
+        <rdom>
+          <rdommin>0</rdommin>
+          <rdommax>84.1535</rdommax>
+          <attrunit>square feet</attrunit>
+        </rdom>
+      </attrdomv>
+    </attr>
+    <attr>
+      <attrlabl>3 point</attrlabl>
+      <attrdef>Mean velocity of the vertical from the three-point method.</attrdef>
+      <attrdefs>Producer defined</attrdefs>
+      <attrdomv>
+        <rdom>
+          <rdommin>0</rdommin>
+          <rdommax>5.34607</rdommax>
+          <attrunit>feet per second</attrunit>
+        </rdom>
+      </attrdomv>
+    </attr>
+    <attr>
+      <attrlabl>Q internal</attrlabl>
+      <attrdef>Discharge of the subsection.</attrdef>
+      <attrdefs>Producer defined</attrdefs>
+      <attrdomv>
+        <rdom>
+          <rdommin>0</rdommin>
+          <rdommax>221.974</rdommax>
+          <attrunit>cubic feet per second</attrunit>
+        </rdom>
+      </attrdomv>
+    </attr>
+    <attr>
+      <attrlabl>% total</attrlabl>
+      <attrdef>Share of the total cross-section discharge carried by the subsection.</attrdef>
+      <attrdefs>Producer defined</attrdefs>
+      <attrdomv>
+        <rdom>
+          <rdommin>0</rdommin>
+          <rdommax>13.9789</rdommax>
+          <attrunit>percent</attrunit>
+        </rdom>
+      </attrdomv>
+    </attr>
+    <attr>
+      <attrlabl>Site</attrlabl>
+      <attrdef>Cross section (site) code.</attrdef>
+      <attrdefs>Producer defined</attrdefs>
+      <attrdomv>
+        <edom>
+          <edomv>KLM</edomv>
+          <edomvd>Site 1, just downstream of the Klamathon Bridge</edomvd>
+          <edomvds>Producer defined</edomvds>
+        </edom>
+      </attrdomv>
+      <attrdomv>
+        <edom>
+          <edomv>I5</edomv>
+          <edomvd>Site 2, just downstream of the Interstate 5 bridge</edomvd>
+          <edomvds>Producer defined</edomvds>
+        </edom>
+      </attrdomv>
+      <attrdomv>
+        <edom>
+          <edomv>TOH</edomv>
+          <edomvd>Site 3, just downstream of the Tree of Heaven Campground</edomvd>
+          <edomvds>Producer defined</edomvds>
+        </edom>
+      </attrdomv>
+      <attrdomv>
+        <edom>
+          <edomv>BVR</edomv>
+          <edomvd>Site 4, just upstream of the Beaver Creek confluence</edomvd>
+          <edomvds>Producer defined</edomvds>
+        </edom>
+      </attrdomv>
+      <attrdomv>
+        <edom>
+          <edomv>KMN</edomv>
+          <edomvd>Site 5, just downstream of the Kinsman fish trapping site</edomvd>
+          <edomvds>Producer defined</edomvds>
+        </edom>
+      </attrdomv>
+      <attrdomv>
+        <edom>
+          <edomv>SV</edomv>
+          <edomvd>Site 6, in Seiad Valley just upstream of the Grider Creek confluence (river left)</edomvd>
+          <edomvds>Producer defined</edomvds>
+        </edom>
+      </attrdomv>
+    </attr>
+    </detailed>
+  </eainfo>
+  <distinfo>
+  <distrib>
+    <cntinfo>
+      <cntperp>
+        <cntper>Dylan J. Keel</cntper>
+        <cntorg>Resource Environmental Solutions, LLC</cntorg>
+      </cntperp>
+      <cntaddr>
+        <addrtype>mailing address</addrtype>
+        <city>Sacramento</city>
+        <state>CA</state>
+        <postal>95818</postal>
+      </cntaddr>
+      <cntvoice>+1 (831) 227-1168</cntvoice>
+      <cntemail>dkeel@res.us</cntemail>
+    </cntinfo>
+  </distrib>
+    <distliab>Unless otherwise stated, all data, metadata and related materials are considered to satisfy the quality standards relative to the purpose for which the data were collected. Although these data and associated metadata have been reviewed for accuracy and completeness, no warranty expressed or implied is made regarding the display or utility of the data for other purposes, nor on all computer systems, nor shall the act of distribution constitute any such warranty.</distliab>
+    <stdorder>
+      <digform>
+        <digtinfo>
+          <formname>CSV</formname>
+        </digtinfo>
+        <digtopt>
+          <onlinopt>
+            <computer>
+              <networka>
+                <networkr>https://github.com/Dylan-Keel/Spatial-variability-in-environmental-DNA-concentrations-on-river-cross-sections-sampling-abundance</networkr>
+              </networka>
+            </computer>
+          </onlinopt>
+        </digtopt>
+      </digform>
+      <fees>None</fees>
+    </stdorder>
+  </distinfo>
+  <metainfo>
+    <metd>20261014</metd>
+  <metc>
+    <cntinfo>
+      <cntperp>
+        <cntper>Dylan J. Keel</cntper>
+        <cntorg>Resource Environmental Solutions, LLC</cntorg>
+      </cntperp>
+      <cntaddr>
+        <addrtype>mailing address</addrtype>
+        <city>Sacramento</city>
+        <state>CA</state>
+        <postal>95818</postal>
+      </cntaddr>
+      <cntvoice>+1 (831) 227-1168</cntvoice>
+      <cntemail>dkeel@res.us</cntemail>
+    </cntinfo>
+  </metc>
+    <metstdn>FGDC Content Standard for Digital Geospatial Metadata</metstdn>
+    <metstdv>FGDC-STD-001-1998</metstdv>
+  </metainfo>
+</metadata>
