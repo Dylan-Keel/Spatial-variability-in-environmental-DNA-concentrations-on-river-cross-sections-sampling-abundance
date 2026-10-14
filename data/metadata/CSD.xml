@@ -592,7 +592,7 @@
     </attr>
     <attr>
       <attrlabl>Meters</attrlabl>
-      <attrdef>Along-river position of the cross section (one value per site) used as the x coordinate of the spatial model. VERIFY: the values appear to be river distance in meters assigned in alphabetical order of site code rather than upstream to downstream order; see the data README.</attrdef>
+      <attrdef>River distance of the cross section from the mouth of the Klamath River (river kilometer x 1000), one value per site, used as the along-river coordinate of the spatial model.</attrdef>
       <attrdefs>Producer defined</attrdefs>
       <attrdomv>
         <rdom>
