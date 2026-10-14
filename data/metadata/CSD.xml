@@ -556,25 +556,25 @@
     </attr>
     <attr>
       <attrlabl>Chinook.vol.cor.conc</attrlabl>
-      <attrdef>O. tshawytscha eDNA concentration in the water sample as stored in this file: copies per liter multiplied by 1,000,000 (legacy unit). The analysis script recomputes copies per liter as Chinook.c.well x Elution.volum..uL. / 15 x Volume..ml. / 1000.</attrdef>
+      <attrdef>O. tshawytscha eDNA concentration in the water sample, rounded to the nearest copy: Chinook.c.well x Elution.volum..uL. / 15 x Volume..ml. / 1000.</attrdef>
       <attrdefs>Producer defined</attrdefs>
       <attrdomv>
         <rdom>
           <rdommin>0</rdommin>
-          <rdommax>3733200000</rdommax>
-          <attrunit>copies per liter x 1e6</attrunit>
+          <rdommax>3733</rdommax>
+          <attrunit>copies per liter</attrunit>
         </rdom>
       </attrdomv>
     </attr>
     <attr>
       <attrlabl>C.shasta.vol.cor.conc</attrlabl>
-      <attrdef>C. shasta eDNA concentration in the water sample as stored in this file: copies per liter multiplied by 1,000,000 (legacy unit). The analysis script recomputes copies per liter as C.shasta.c.well x Elution.volum..uL. / 15 x Volume..ml. / 1000.</attrdef>
+      <attrdef>C. shasta eDNA concentration in the water sample, rounded to the nearest copy: C.shasta.c.well x Elution.volum..uL. / 15 x Volume..ml. / 1000.</attrdef>
       <attrdefs>Producer defined</attrdefs>
       <attrdomv>
         <rdom>
           <rdommin>0</rdommin>
-          <rdommax>257000000000</rdommax>
-          <attrunit>copies per liter x 1e6</attrunit>
+          <rdommax>257222</rdommax>
+          <attrunit>copies per liter</attrunit>
         </rdom>
       </attrdomv>
     </attr>
@@ -628,7 +628,7 @@
     </attr>
     <attr>
       <attrlabl>DistanceFromShore.m.z</attrlabl>
-      <attrdef>Distance from the nearer bank; identical to DistanceFromShore.m (the standardized version is created by the analysis script).</attrdef>
+      <attrdef>Distance from the nearer bank, identical to DistanceFromShore.m; the analysis script standardizes this column for the models.</attrdef>
       <attrdefs>Producer defined</attrdefs>
       <attrdomv>
         <rdom>
@@ -658,18 +658,6 @@
         <rdom>
           <rdommin>-2.08069</rdommin>
           <rdommax>2.1651</rdommax>
-          <attrunit>standard deviations</attrunit>
-        </rdom>
-      </attrdomv>
-    </attr>
-    <attr>
-      <attrlabl>Chinook.vol.cor.conc.z</attrlabl>
-      <attrdef>Chinook.vol.cor.conc standardized to mean zero and unit standard deviation; not used in the analysis.</attrdef>
-      <attrdefs>Producer defined</attrdefs>
-      <attrdomv>
-        <rdom>
-          <rdommin>-0.97255</rdommin>
-          <rdommax>5.65646</rdommax>
           <attrunit>standard deviations</attrunit>
         </rdom>
       </attrdomv>

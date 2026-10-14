@@ -157,8 +157,8 @@
       </attrdomv>
     </attr>
     <attr>
-      <attrlabl>Depth </attrlabl>
-      <attrdef>Total depth at the vertical, Ellsworth A-55 sounding reel (column name carries a trailing space in the file).</attrdef>
+      <attrlabl>Depth</attrlabl>
+      <attrdef>Total depth at the vertical, Ellsworth A-55 sounding reel.</attrdef>
       <attrdefs>Producer defined</attrdefs>
       <attrdomv>
         <rdom>
@@ -266,7 +266,7 @@
     </attr>
     <attr>
       <attrlabl>fps.2</attrlabl>
-      <attrdef>Velocity at 20 percent of depth from the meter rating (stored as text where blank).</attrdef>
+      <attrdef>Velocity at 20 percent of depth from the meter rating; blank where no count was made at that depth.</attrdef>
       <attrdefs>Producer defined</attrdefs>
       <attrdomv>
         <rdom>

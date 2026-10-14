@@ -54,8 +54,16 @@ source("Sampling_Design_Functions.R")    # sample size under random and stratifi
 set.seed(20230126)
 SEED <- 20230126L
 inla.setOption(num.threads = "1:1")
-fit.inla <- function(...) tryCatch(inla(...), error = function(e) {
-  message("inla could not run this fit on one thread; refitting on two"); inla(..., num.threads = "2:1") })
+## The Poisson fit to the C. shasta counts is so overdispersed that the inla
+## program can crash; a crashed fit is retried with more threads
+fit.inla <- function(...) {
+  for (threads in list(NULL, "2:1", "4:1", "8:1")) {
+    fit <- tryCatch(if (is.null(threads)) inla(...) else inla(..., num.threads = threads), error = function(e) NULL)
+    if (!is.null(fit)) return(fit)
+    message("inla could not run this fit", if (is.null(threads)) " on one thread" else paste0(" on ", threads, " threads"), "; retrying")
+  }
+  stop("inla failed on every thread setting")
+}
 N.WORKERS <- max(1, parallel::detectCores() - 2)
 RUN.KFOLD <- FALSE      # TRUE repeats the cross-validation instead of reading the saved results
 

@@ -117,7 +117,7 @@
     <detailed>
       <enttyp>
         <enttypl>2021FIELD_DATA_Klamath.2.csv</enttypl>
-        <enttypd>Field sheet: one row per water sample collected (253 rows), including the surface and depth samples used in the analysis, the depth-integrated samples, field blanks, and the hydraulic measurements at each vertical.</enttypd>
+        <enttypd>Field sheet: one row per water sample collected (253 rows), including the surface and depth samples used in the analysis, the depth-integrated samples, extra samples, field blanks, and the hydraulic measurements at each vertical.</enttypd>
         <enttypds>Producer defined</enttypds>
       </enttyp>
     <attr>
@@ -483,14 +483,6 @@
       </attrdomv>
     </attr>
     <attr>
-      <attrlabl>Copies/uL</attrlabl>
-      <attrdef>Empty column (no values). Consider removing before the data release.</attrdef>
-      <attrdefs>Producer defined</attrdefs>
-      <attrdomv>
-        <udom>No values</udom>
-      </attrdomv>
-    </attr>
-    <attr>
       <attrlabl>Elution volum (uL)</attrlabl>
       <attrdef>Volume of buffer in which the extracted DNA was eluted.</attrdef>
       <attrdefs>Producer defined</attrdefs>
@@ -500,22 +492,6 @@
           <rdommax>150</rdommax>
           <attrunit>microliters</attrunit>
         </rdom>
-      </attrdomv>
-    </attr>
-    <attr>
-      <attrlabl>C shasta copies/L</attrlabl>
-      <attrdef>Empty column (no values). Consider removing before the data release.</attrdef>
-      <attrdefs>Producer defined</attrdefs>
-      <attrdomv>
-        <udom>No values</udom>
-      </attrdomv>
-    </attr>
-    <attr>
-      <attrlabl>Chinook copies/L</attrlabl>
-      <attrdef>Empty column (no values). Consider removing before the data release.</attrdef>
-      <attrdefs>Producer defined</attrdefs>
-      <attrdomv>
-        <udom>No values</udom>
       </attrdomv>
     </attr>
     </detailed>
