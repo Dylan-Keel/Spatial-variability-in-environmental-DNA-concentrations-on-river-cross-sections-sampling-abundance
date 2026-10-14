@@ -171,9 +171,9 @@ ui <- fluidPage(
       radioButtons("strategy", NULL, choices = STRATEGY_SIM, selected = "stratified"),
       hint(HINTS$strategy),
       hr(),
-      h4("Solve for n"),
+      h4("Precision wanted"),
       sliderInput("cv_target", "Target CV (precision goal)", min = 0.05, max = 1.00, value = 0.20, step = 0.01, ticks = FALSE), hint(HINTS$cv_target),
-      h4("Solve for CV"),
+      h4("Precision reached with a given n"),
       sliderInput("n_given", "Number of samples (n)", min = 1, max = 60, value = 9, step = 1, ticks = FALSE), hint(HINTS$n_given),
       hr(),
       actionButton("resim", "↻  Re-simulate field", class = "btn-primary btn-block", width = "100%")
