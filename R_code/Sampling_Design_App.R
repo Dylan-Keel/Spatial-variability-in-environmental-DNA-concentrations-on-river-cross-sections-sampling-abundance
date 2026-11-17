@@ -30,6 +30,7 @@ matern_field <- function(width, max_depth = 3, n_x = 40, n_y = 14, cv_site, p, r
   grid
 }
 fmt_n <- function(x) if (is.na(x) || x > N_MAX) paste("more than", N_MAX) else as.character(x)
+CVT <- "CV<sub>target</sub>"; CVS <- "CV<sub>site</sub>"
 
 ## a parameter label with its technical definition on hover
 tip <- function(label, value_id, definition)
@@ -43,6 +44,7 @@ slider <- function(id, label, min, max, value, step) sliderInput(id, label, min 
 ui <- fluidPage(
   tags$head(tags$style(HTML("
     body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 13.5px; background: #f5f7fa; color: #2b2b2b; }
+    .container-fluid { max-width: 1250px; }
     .top { background: #1a5276; color: white; padding: 10px 20px; margin: 0 -15px 14px -15px; }
     .top h1 { font-size: 17px; font-weight: bold; margin: 0; } .top p { font-size: 12.5px; color: #d5e8f3; margin: 2px 0 0 0; }
     .card { background: white; border: 1px solid #d5e8f3; border-radius: 6px; padding: 12px 14px; margin-bottom: 12px; }
@@ -66,65 +68,80 @@ ui <- fluidPage(
     .ok { color: #1e8449; font-weight: bold; } .short { color: #c0392b; font-weight: bold; }
     details { background: white; border: 1px solid #d5e8f3; border-radius: 6px; padding: 8px 14px; margin-bottom: 8px; font-size: 13px; line-height: 1.5; }
     details summary { cursor: pointer; font-weight: bold; color: #1a5276; }
+    details.step5 { margin-bottom: 12px; padding: 10px 14px; } details.step5 summary { font-size: 14.5px; }
+    details.step5 summary .num { margin: 0 6px 0 4px; } details.step5 .in { max-width: 420px; }
+    .skip .num { background: #9fb3c2; } .skip h2 { color: #6b7f8c; } .skip .step-head { margin-bottom: 0; }
   "))),
   div(class = "top", h1("eDNA River Cross-Section Sampling Design Tool"),
-      p("How many 1-L water samples do you need to estimate the mean eDNA concentration on a river cross section? Work through the five steps.")),
+      p("How many 1-L water samples do you need to estimate the mean eDNA concentration on a river cross section? Work through the steps.")),
+
+  ## steps 1 and 2
   fluidRow(
-    column(4,
-      step(1, "How precise must the estimate be?",
-        actionButton("cv01", HTML("0.1 &nbsp;Research"), class = "chip"), actionButton("cv02", HTML("0.2 &nbsp;Management"), class = "chip"),
-        actionButton("cv03", HTML("0.3 &nbsp;Pilot study"), class = "chip"),
-        slider("cv_target", tip("Target CV", "v_cvt", "Target CV = standard error of the estimated cross-section mean &divide; the mean. It is a precision criterion, not statistical power. A 95% interval is roughly the mean &plusmn; 2 &times; target CV."), 0.05, 0.60, 0.20, 0.01),
-        uiOutput("lay_target"), klam("Keel et al. reached 0.07&ndash;0.25, median 0.10")),
-      step(2, "How variable is your site?",
-        slider("cv_site", tip("Site CV", "v_cvs", "Site CV = standard deviation &divide; mean of eDNA concentration among single 1-L samples taken across the cross section. It includes field heterogeneity and laboratory measurement error."), 0.10, 2.00, 0.55, 0.01),
-        div(class = "pilot", span(style = "width:100%", "or from a pilot study:"),
-            div(numericInput("pilot_mean", "mean", value = 1000, min = 0, width = "95px")), div(numericInput("pilot_sd", "SD", value = 550, min = 0, width = "95px")),
-            HTML('<span class="tip" tabindex="0">i<span class="tt">Enter the mean and standard deviation of concentration among your pilot samples (any units, for example copies per liter). Site CV = SD &divide; mean. Changing the site CV updates the SD for the same mean.</span></span>')),
-        lay("How much single samples differ from one another: SD &divide; mean of your pilot samples. <b>Doubling it quadruples the samples needed.</b>"),
-        klam("Keel et al.: 0.40&ndash;1.43, median 0.55")),
-      step(3, "Describe the cross section",
-        lay("These three only matter for evenly spaced samples. <b>No pilot data on patchiness? Skip this step</b> and use the simple random answer, which is a safe upper bound."),
-        slider("width_m", tip("Width (m)", "v_w", "Wetted width of the cross section. Evenly spaced samples on a wider section are farther apart relative to the patch size, so they are less correlated."), 5, 150, 38, 1),
-        lay("Wider than the patches &rarr; evenly spaced samples are less alike &rarr; <b>fewer needed</b>."), klam("Keel et al.: 34&ndash;45 m, median 38 m"),
-        slider("p", tip("Patchiness", "v_p", "Spatial proportion of variance, p = 1 &minus; nugget &divide; sill of a semivariogram of pilot samples: the share of the variance among samples that is spatially structured rather than random noise."), 0, 0.95, 0.50, 0.01),
-        lay("Share of the variation that comes in patches (neighbouring samples alike) rather than random noise. <b>More patchy &rarr; bigger saving from even spacing.</b>"), klam("Keel et al.: 0.33 and 0.60 (one estimate per species)"),
-        slider("range_m", tip("Patch size (m)", "v_r", "Correlation range of a Mat&eacute;rn (&nu; = 1) spatial model: the distance at which the correlation between two samples falls to about 0.14. Read it from a semivariogram of pilot samples."), 1, 100, 30, 1),
-        lay("Distance over which samples stay alike. Even spacing <b>saves most when patches are about as large as the section</b>, least when they are tiny or far larger."), klam("Keel et al.: 14 m and 50 m (one estimate per species)")),
-      step(4, "How will you place the samples?",
-        radioButtons("strategy", NULL, selected = "stratified", choiceValues = c("random", "stratified"), choiceNames = list(
-          HTML("<b>Simple random</b><br>Sample points picked at random across the width, or samples you cannot space evenly. Needs no knowledge of patchiness."),
-          HTML("<b>Spatially stratified</b><br>Split the width into n equal strips and take one sample at the centre of each, bank to bank. Covers every patch, so it needs no more samples than random, often fewer."))),
-        uiOutput("n_both")),
-      step(5, "Check a sample number",
-        slider("n_given", tip("Samples you can afford", "v_n", "Number of 1-L water samples collected on the cross section on one visit. The tool returns the CV of the estimated mean that this many samples achieve."), 1, 100, 9, 1),
-        klam("Keel et al.: 28&ndash;35 per section, median 33"), uiOutput("check"))
-    ),
-    column(8,
-      uiOutput("answer"),
-      div(class = "card", div(class = "panel-title", "Precision against number of samples"),
-          div(class = "panel-sub", "Where a curve drops below the dashed target line is the number of samples you need. The dotted line is your number from step 5."),
-          plotOutput("cv_curve", height = "300px")),
-      div(class = "card", div(class = "panel-title", "What a cross section like this looks like", actionButton("resim", "↻ New simulation", class = "btn-xs", style = "float:right")),
-          div(class = "panel-sub", "A simulated cross section with your site CV, patchiness, and patch size. Colour is concentration relative to the section mean."),
-          plotOutput("cross_section", height = "230px")),
-      div(class = "card", div(class = "panel-title", "Planning maps: samples needed for any width and site CV"),
-          div(class = "panel-sub", "At your target CV, patchiness, and patch size. The white dot is your site."),
-          plotOutput("maps", height = "430px")),
-      tags$details(tags$summary("How the numbers are calculated"),
-        tags$p(HTML("<b>Simple random.</b> CV(n) = site CV &divide; &radic;n, so n = (site CV &divide; target CV)&sup2; (Cochran 1977).")),
-        tags$p(HTML("<b>Spatially stratified.</b> Concentration across the width is modelled as a share <i>p</i> of spatially correlated variation (Mat&eacute;rn correlation, &nu; = 1, with the chosen range) plus a share 1 &minus; <i>p</i> of independent noise. The CV of the mean of n samples at the centres of n equal strips is site CV &times; &radic;[(<i>p</i> A(n) + (1 &minus; <i>p</i>)/n) &divide; (1 &minus; <i>p</i> c&#772;)], where A(n) is the variance of the difference between the sample mean and the true section mean of the correlated part, and c&#772; is the mean correlation between two random positions on the section. The tool reports the smallest n that meets the target.")),
-        tags$p(HTML("<b>Simulation.</b> A log-normal field with the chosen site CV, patchiness, and patch size in a randomly drawn channel up to 3 m deep. It is an illustration; the sample numbers do not depend on the bed shape or on the simulation."))),
-      tags$details(tags$summary("What this tool does not cover"), tags$ul(
-        tags$li("It concerns the mean of one cross section on one visit, not day-to-day change and not how well one section represents a longer reach."),
-        tags$li("The site CV from a small pilot is itself uncertain, and the samples needed scale with its square. Round up."),
-        tags$li("Patterns with depth are not modelled. In Keel et al. Chinook salmon eDNA declined with depth, so sample both surface and depth."),
-        tags$li("Detection limits and the volume filtered per sample are outside its scope."))),
-      tags$details(tags$summary("Where the Keel et al. values come from"),
-        tags$p(HTML("The green tags give the values measured in one study, Keel et al. (in prep.): six cross sections of the Klamath River, California, sampled during one week in April 2021 with 28 to 35 one-liter samples each, for <i>Ceratonova shasta</i> and Chinook salmon (<i>Oncorhynchus tshawytscha</i>) eDNA. Site CV and width are the range and median across sites and species; patchiness and patch size are one estimate per species from spatial models. They describe those sections on those days, not the Klamath River in general, and are offered as a reference point, not as defaults for other sites.")),
-        tags$p(HTML("Keel, D. J., N. A. Som, M. J. Henderson, and A. P. Kinziger. In prep. <i>Spatial variability in environmental DNA concentrations on river cross sections: implications for sampling design and abundance estimation.</i>")))
-    )
-  )
+    column(6, step(1, "How precise must the estimate be?",
+      actionButton("cv01", HTML("0.1 &nbsp;Research"), class = "chip"), actionButton("cv02", HTML("0.2 &nbsp;Management"), class = "chip"),
+      actionButton("cv03", HTML("0.3 &nbsp;Pilot study"), class = "chip"),
+      slider("cv_target", tip(CVT, "v_cvt", "CV<sub>target</sub> = standard error of the estimated cross-section mean &divide; the mean. It is a precision criterion, not statistical power. A 95% interval is roughly the mean &plusmn; 2 &times; CV<sub>target</sub>."), 0.05, 0.60, 0.20, 0.01),
+      uiOutput("lay_target"), klam("Keel et al. reached 0.07&ndash;0.25, median 0.10"))),
+    column(6, step(2, "How variable is your site?",
+      slider("cv_site", tip(CVS, "v_cvs", "CV<sub>site</sub> = standard deviation &divide; mean of eDNA concentration among single 1-L samples taken across the cross section. It includes field heterogeneity and laboratory measurement error."), 0.10, 2.00, 0.55, 0.01),
+      div(class = "pilot", span(style = "width:100%", "or from a pilot study:"),
+          div(numericInput("pilot_mean", "mean", value = 1000, min = 0, width = "95px")), div(numericInput("pilot_sd", "SD", value = 550, min = 0, width = "95px")),
+          HTML('<span class="tip" tabindex="0">i<span class="tt">Enter the mean and standard deviation of concentration among your pilot samples (any units, for example copies per liter). CV<sub>site</sub> = SD &divide; mean. Changing CV<sub>site</sub> updates the SD for the same mean.</span></span>')),
+      lay("How much single 1-L samples differ from one another. <b>Higher CV<sub>site</sub> &rarr; more 1-L samples.</b>"),
+      klam("Keel et al.: 0.40&ndash;1.43, median 0.55")))),
+
+  ## step 3 and its graph
+  fluidRow(
+    column(4, step(3, "How will you place the samples?",
+      radioButtons("strategy", NULL, selected = "random", choiceValues = c("random", "stratified"), choiceNames = list(
+        HTML("<b>Simple random</b><br>Sample points picked at random across the width, or samples you cannot space evenly. Steps 1 and 2 are all you need."),
+        HTML("<b>Spatially stratified</b><br>Split the width into n equal strips and take one sample at the centre of each, bank to bank. The same or fewer 1-L samples than simple random. Continue to step 4."))))),
+    column(8, div(class = "card", div(class = "panel-title", textOutput("rand_title", inline = TRUE)),
+      div(class = "panel-sub", HTML("The number of 1-L samples needed is where the curve drops below the dashed CV<sub>target</sub> line.")),
+      plotOutput("curve_random", height = "240px")))),
+
+  ## step 4 and its graph (spatially stratified only)
+  conditionalPanel("input.strategy == 'stratified'", fluidRow(
+    column(4, step(4, "Describe the cross section",
+      slider("width_m", tip("Width (m)", "v_w", "Wetted width of the cross section, bank to bank."), 5, 150, 38, 1),
+      klam("Keel et al.: 34&ndash;45 m, median 38 m"),
+      slider("p", tip("Patchiness", "v_p", "Spatial proportion of variance, p = 1 &minus; nugget &divide; sill of a semivariogram of pilot samples: the share of the variance among samples that is spatially structured rather than random noise."), 0, 0.95, 0.50, 0.01),
+      lay("Share of the variation that comes in patches rather than random noise. <b>Higher patchiness &rarr; fewer 1-L samples.</b>"), klam("Keel et al.: 0.33 Chinook salmon, 0.60 <i>C. shasta</i>"),
+      slider("range_m", tip("Patch size (m)", "v_r", "Correlation range of a Mat&eacute;rn (&nu; = 1) spatial model: the distance at which the correlation between two samples falls to about 0.14. Read it from a semivariogram of pilot samples."), 1, 100, 30, 1),
+      lay("Distance over which samples stay alike. <b>Fewest 1-L samples when patches are about a tenth to a fifth of the width; more when they are smaller or larger.</b>"), klam("Keel et al.: 14 m Chinook salmon, 50 m <i>C. shasta</i>"))),
+    column(8, div(class = "card", div(class = "panel-title", textOutput("strat_title", inline = TRUE)),
+      div(class = "panel-sub", "The same graph for evenly spaced samples, with simple random for comparison."),
+      plotOutput("curve_strat", height = "330px"))))),
+  conditionalPanel("input.strategy == 'random'",
+    div(class = "card skip", div(class = "step-head", span(class = "num", 4), h2(HTML("Describe the cross section <span style='font-weight:normal'>&mdash; only needed for spatially stratified placement</span>"))))),
+
+  uiOutput("answer"),
+
+  ## step 5
+  tags$details(class = "step5", tags$summary(span(class = "num", 5), "Exploring other sample sizes"),
+    div(class = "in",
+      slider("n_given", tip("Number of 1-L samples", "v_n", "Number of 1-L water samples collected on the cross section on one visit. The tool returns the CV of the estimated mean that this many samples achieve."), 1, 100, 9, 1),
+      klam("Keel et al.: 28&ndash;35 per section, median 33"), uiOutput("check"))),
+
+  conditionalPanel("input.strategy == 'stratified'",
+    div(class = "card", div(class = "panel-title", "What a cross section like this looks like", actionButton("resim", "↻ New simulation", class = "btn-xs", style = "float:right")),
+        div(class = "panel-sub", HTML("A simulated cross section with your CV<sub>site</sub>, patchiness, and patch size. Colour is concentration relative to the section mean.")),
+        plotOutput("cross_section", height = "230px"))),
+  div(class = "card", div(class = "panel-title", HTML("Planning maps: 1-L samples needed for any width and CV<sub>site</sub>")),
+      div(class = "panel-sub", uiOutput("map_sub", inline = TRUE)),
+      plotOutput("maps", height = "430px")),
+  tags$details(tags$summary("How the numbers are calculated"),
+    tags$p(HTML("<b>Simple random.</b> CV(n) = CV<sub>site</sub> &divide; &radic;n, so n = (CV<sub>site</sub> &divide; CV<sub>target</sub>)&sup2; (Cochran 1977).")),
+    tags$p(HTML("<b>Spatially stratified.</b> Concentration across the width is modelled as a share <i>p</i> of spatially correlated variation (Mat&eacute;rn correlation, &nu; = 1, with the chosen range) plus a share 1 &minus; <i>p</i> of independent noise. The CV of the mean of n samples at the centres of n equal strips is CV<sub>site</sub> &times; &radic;[(<i>p</i> A(n) + (1 &minus; <i>p</i>)/n) &divide; (1 &minus; <i>p</i> c&#772;)], where A(n) is the variance of the difference between the sample mean and the true section mean of the correlated part, and c&#772; is the mean correlation between two random positions on the section. The tool reports the smallest n at which this CV meets CV<sub>target</sub>.")),
+    tags$p(HTML("<b>Simulation.</b> A log-normal field with the chosen CV<sub>site</sub>, patchiness, and patch size in a randomly drawn channel up to 3 m deep. It is an illustration; the sample numbers do not depend on the bed shape or on the simulation."))),
+  tags$details(tags$summary("What this tool does not cover"), tags$ul(
+    tags$li("It concerns the mean of one cross section on one visit, not day-to-day change and not how well one section represents a longer reach."),
+    tags$li(HTML("CV<sub>site</sub> from a small pilot is itself uncertain, and the samples needed scale with its square. Round up.")),
+    tags$li("Patterns with depth are not modelled. In Keel et al. Chinook salmon eDNA declined with depth, so sample both surface and depth."),
+    tags$li("Detection limits and the volume filtered per sample are outside its scope."))),
+  tags$details(tags$summary("Where the Keel et al. values come from"),
+    tags$p(HTML("The green tags give the values measured in one study, Keel et al. (in prep.): six cross sections of the Klamath River, California, sampled during one week in April 2021 with 28 to 35 one-liter samples each, for <i>Ceratonova shasta</i> and Chinook salmon (<i>Oncorhynchus tshawytscha</i>) eDNA. CV<sub>site</sub> and width are the range and median across sites and species; patchiness and patch size are one estimate per species from spatial models. They describe those sections on those days, not the Klamath River in general, and are offered as a reference point, not as defaults for other sites.")),
+    tags$p(HTML("Keel, D. J., N. A. Som, M. J. Henderson, and A. P. Kinziger. In prep. <i>Spatial variability in environmental DNA concentrations on river cross sections: implications for sampling design and abundance estimation.</i>")))
 )
 
 server <- function(input, output, session) {
@@ -138,7 +155,7 @@ server <- function(input, output, session) {
   output$v_w <- renderText(input$width_m); output$v_p <- renderText(sprintf("%.2f", input$p))
   output$v_r <- renderText(input$range_m); output$v_n <- renderText(input$n_given)
 
-  ## step 2: the site CV and the pilot mean and SD keep each other in step
+  ## step 2: CV_site and the pilot mean and SD keep each other in step
   observeEvent(input$cv_site, { m <- input$pilot_mean
     if (isTruthy(m) && m > 0 && (!isTruthy(input$pilot_sd) || abs(input$pilot_sd / m - input$cv_site) > 0.006)) updateNumericInput(session, "pilot_sd", value = signif(m * input$cv_site, 4)) }, ignoreInit = TRUE)
   observeEvent(c(input$pilot_mean, input$pilot_sd), { m <- input$pilot_mean; s <- input$pilot_sd
@@ -149,51 +166,56 @@ server <- function(input, output, session) {
   n_strat <- reactive(n_stratified(input$cv_site, input$cv_target, input$width_m, input$p, tab(), n_max = N_MAX))
   strat   <- reactive(input$strategy == "stratified")
 
-  output$lay_target <- renderUI({ pct <- round(input$cv_target * 100)
-    lay(sprintf("Your estimate of the mean will typically be within about <b>%d%%</b> of the true value (95 times in 100 within about %d%%). <b>Halving the target quadruples the samples needed.</b>", pct, 2 * pct)) })
-  output$n_both <- renderUI(lay(sprintf("Simple random: <b>n = %s</b> &nbsp;&middot;&nbsp; Spatially stratified: <b>n = %s</b>", fmt_n(n_rand()), fmt_n(n_strat()))))
+  output$lay_target <- renderUI(lay(sprintf("Your estimate of the mean will typically be within about <b>%d%%</b> of the true value. <b>Lower %s &rarr; more 1-L samples.</b>", round(input$cv_target * 100), CVT)))
+  output$rand_title  <- renderText(paste("Simple random: n =", fmt_n(n_rand())))
+  output$strat_title <- renderText(paste("Spatially stratified: n =", fmt_n(n_strat())))
+  output$map_sub <- renderUI(HTML(sprintf("At your %s%s. The white dot is your site.", CVT, if (strat()) ", patchiness, and patch size" else "")))
   output$answer <- renderUI({
-    n <- if (strat()) n_strat() else n_rand(); nr <- n_rand(); ns <- n_strat()
-    saving <- if (strat() && !is.na(ns) && ns < nr) sprintf(" Even spacing saves %d sample%s.", nr - ns, if (nr - ns == 1) "" else "s") else ""
+    n <- if (strat()) n_strat() else n_rand()
     div(class = "answer",
-        div(class = "big", sprintf("Collect %s one-liter samples, %s", if (is.na(n) || n > N_MAX) paste("more than", N_MAX) else paste("at least", n),
+        div(class = "big", sprintf("Collect %s 1-L samples, %s", if (is.na(n) || n > N_MAX) paste("more than", N_MAX) else paste("at least", n),
                                    if (strat()) "evenly spaced across the width" else "placed at random")),
-        div(class = "sub", sprintf("for a target CV of %.2f at a site CV of %.2f. %s%s", input$cv_target, input$cv_site,
-                                   if (strat()) sprintf("Placed at random you would need %s.", fmt_n(nr)) else sprintf("Evenly spaced you would need %s.", fmt_n(ns)), saving)))
+        div(class = "sub", HTML(sprintf("for %s = %.2f at %s = %.2f.%s", CVT, input$cv_target, CVS, input$cv_site,
+                                        if (strat()) sprintf(" Placed at random you would need %s.", fmt_n(n_rand())) else ""))))
   })
   output$check <- renderUI({
-    n <- input$n_given; cr <- cv_random(input$cv_site, n); cs <- cv_stratified(input$cv_site, n, input$width_m, input$p, tab())
-    cg <- if (strat()) cs else cr
-    HTML(sprintf('<div class="check">With %d sample%s, %s: CV = <b>%.2f</b> %s<br><small style="color:#555">%s: %.2f</small></div>',
-                 n, if (n == 1) "" else "s", if (strat()) "evenly spaced" else "at random", cg,
-                 if (cg <= input$cv_target) '<span class="ok">meets your target</span>' else '<span class="short">misses your target</span>',
-                 if (strat()) "At random" else "Evenly spaced", if (strat()) cr else cs))
+    n <- input$n_given; cr <- cv_random(input$cv_site, n)
+    cg <- if (strat()) cv_stratified(input$cv_site, n, input$width_m, input$p, tab()) else cr
+    HTML(sprintf('<div class="check">%d 1-L sample%s, %s: CV of the estimated mean = <b>%.2f</b>, %s%s</div>',
+                 n, if (n == 1) "" else "s", if (strat()) "evenly spaced" else "placed at random", cg,
+                 if (cg <= input$cv_target) sprintf('<span class="ok">meets %s</span>', CVT) else sprintf('<span class="short">misses %s</span>', CVT),
+                 if (strat()) sprintf('<br><small style="color:#555">Placed at random: %.2f</small>', cr) else ""))
   })
+  ## step 5 sits in a closed drop-down, so its outputs must not wait to be visible
+  outputOptions(output, "check", suspendWhenHidden = FALSE); outputOptions(output, "v_n", suspendWhenHidden = FALSE)
 
-  output$cv_curve <- renderPlot({
-    nr <- n_rand(); ns <- n_strat()
-    x_max <- min(300, max(60, ceiling(max(nr, ns, input$n_given, na.rm = TRUE) * 1.25 / 10) * 10))
-    n_seq <- 1:x_max
-    df <- rbind(data.frame(n = n_seq, CV = cv_random(input$cv_site, n_seq), type = "Simple random"),
-                data.frame(n = n_seq, CV = cv_stratified(input$cv_site, n_seq, input$width_m, input$p, tab()), type = "Spatially stratified"))
-    pts <- data.frame(n = c(nr, ns), CV = input$cv_target, type = c("Simple random", "Spatially stratified"), v = c(-0.9, 1.9), h = c(-0.15, 1.15))
+  ## precision curves: one graph per placement
+  curve_plot <- function(design) {
+    is_s <- design == "stratified"; nr <- n_rand(); ns <- if (strat()) n_strat() else NA
+    x_max <- min(300, max(30, ceiling(max(nr, ns, na.rm = TRUE) * 1.4 / 10) * 10)); n_seq <- 1:x_max
+    df  <- data.frame(n = n_seq, CV = cv_random(input$cv_site, n_seq), type = "Simple random")
+    pts <- data.frame(n = nr, CV = input$cv_target, type = "Simple random", v = -0.9, h = -0.15)
+    if (is_s) {
+      df  <- rbind(df, data.frame(n = n_seq, CV = cv_stratified(input$cv_site, n_seq, input$width_m, input$p, tab()), type = "Spatially stratified"))
+      pts <- rbind(pts, data.frame(n = n_strat(), CV = input$cv_target, type = "Spatially stratified", v = 1.9, h = 1.15))
+    }
     pts <- pts[!is.na(pts$n) & pts$n <= x_max, ]
-    lw <- if (strat()) c(0.8, 1.5) else c(1.5, 0.8)
     ggplot(df, aes(x = n, y = CV, colour = type, linetype = type, linewidth = type)) +
       geom_hline(yintercept = input$cv_target, linetype = "dashed", colour = "grey30") +
-      annotate("text", x = x_max, y = input$cv_target, label = sprintf("target CV %.2f", input$cv_target), hjust = 1, vjust = -0.5, size = 3.5, colour = "grey25") +
-      geom_vline(xintercept = input$n_given, linetype = "dotted", colour = "grey55") +
+      annotate("text", x = x_max, y = input$cv_target, label = sprintf("CV[target] == '%.2f'", input$cv_target), parse = TRUE, hjust = 1, vjust = -0.4, size = 3.8, colour = "grey25") +
       geom_line() +
       geom_point(data = pts, size = 3.5, show.legend = FALSE) +
       geom_text(data = pts, aes(label = paste("n =", n), vjust = v, hjust = h), size = 4, show.legend = FALSE) +
-      scale_colour_manual(values = c("#0072B2", "#009E73"), name = NULL) +
-      scale_linetype_manual(values = c("solid", "22"), name = NULL) +
-      scale_linewidth_manual(values = lw, name = NULL) +
+      scale_colour_manual(values = c("Simple random" = "#0072B2", "Spatially stratified" = "#009E73"), name = NULL) +
+      scale_linetype_manual(values = c("Simple random" = "solid", "Spatially stratified" = "22"), name = NULL) +
+      scale_linewidth_manual(values = c("Simple random" = if (is_s) 0.8 else 1.5, "Spatially stratified" = 1.5), name = NULL) +
       scale_x_continuous(limits = c(1, x_max), expand = expansion(mult = c(0, 0.01))) +
       coord_cartesian(ylim = c(0, min(input$cv_site * 1.1, 2.2))) +
       labs(x = "Number of 1-L samples (n)", y = "CV of the estimated mean") +
-      theme_bw(base_size = 13) + theme(panel.grid = element_blank(), axis.title = element_text(face = "bold"), legend.position = "bottom")
-  })
+      theme_bw(base_size = 13) + theme(panel.grid = element_blank(), axis.title = element_text(face = "bold"), legend.position = if (is_s) "bottom" else "none")
+  }
+  output$curve_random <- renderPlot(curve_plot("random"))
+  output$curve_strat  <- renderPlot(curve_plot("stratified"))
 
   output$cross_section <- renderPlot({
     W <- input$width_m
@@ -211,14 +233,15 @@ server <- function(input, output, session) {
       theme_bw(base_size = 13) + theme(panel.grid = element_blank(), axis.title = element_text(face = "bold"))
   })
 
-  ## planning maps: width on the x axis, site CV on the y axis, n range written in each colour block
+  ## planning maps: width on the x axis, CV_site on the y axis, n range written in each colour block
   output$maps <- renderPlot({
     cv_seq <- seq(0.10, 2.00, by = 0.025); w_seq <- seq(5, 150, by = 2.5)
     mk <- function(p, design) n_required_grid(cv_seq, w_seq, input$cv_target, p, tab(), design, n_max = N_MAX)
     mark <- list(cv_site = input$cv_site, width = input$width_m)
     br <- c(0, 3, 5, 10, 15, 20, 30, 50, 100, 250, N_MAX)
-    a <- contour_panel(mk(0, "random"), "Simple random (width has no effect)", br = br, mark = mark, flip = TRUE, band_text = TRUE)
-    b <- contour_panel(mk(input$p, "stratified"), sprintf("Spatially stratified, patchiness %.2f, patch size %s m", input$p, input$range_m), br = br, mark = mark, flip = TRUE, band_text = TRUE)
+    a <- contour_panel(mk(0, "random"), "Simple random (width has no effect)", br = br, mark = mark, flip = TRUE, band_text = TRUE) + labs(y = expression(bold(CV[site])))
+    if (!strat()) return(a + theme(legend.position = "none"))
+    b <- contour_panel(mk(input$p, "stratified"), sprintf("Spatially stratified, patchiness %.2f, patch size %s m", input$p, input$range_m), br = br, mark = mark, flip = TRUE, band_text = TRUE) + labs(y = expression(bold(CV[site])))
     ggpubr::ggarrange(a, b, ncol = 2, legend = "none")
   })
 }

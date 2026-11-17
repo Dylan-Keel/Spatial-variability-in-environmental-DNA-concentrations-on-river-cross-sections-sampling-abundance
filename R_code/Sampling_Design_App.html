@@ -11,10 +11,11 @@
     header { background: #1a5276; color: white; padding: 10px 20px; }
     header h1 { font-size: 17px; font-weight: bold; }
     header p { font-size: 12.5px; color: #d5e8f3; margin-top: 2px; }
-    .app { display: flex; gap: 16px; padding: 14px 16px; align-items: flex-start; max-width: 1500px; margin: 0 auto; }
-    .steps { width: 350px; min-width: 350px; }
-    .main { flex: 1; min-width: 0; }
-    @media (max-width: 900px) { .app { flex-direction: column; } .steps { width: 100%; min-width: 0; } }
+    .wrap { max-width: 1250px; margin: 0 auto; padding: 14px 16px; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+    .rowS { display: grid; grid-template-columns: 360px 1fr; gap: 0 12px; }
+    .rowS > *, .row2 > * { min-width: 0; }
+    @media (max-width: 900px) { .row2, .rowS { grid-template-columns: 1fr; } }
     .card { background: white; border: 1px solid #d5e8f3; border-radius: 6px; padding: 12px 14px; margin-bottom: 12px; }
     .step-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
     .num { background: #1a5276; color: white; border-radius: 50%; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: bold; flex: none; }
@@ -48,6 +49,8 @@
     .ok { color: #1e8449; font-weight: bold; } .short { color: #c0392b; font-weight: bold; }
     button.plain { background: white; border: 1px solid #2980b9; color: #1a5276; border-radius: 4px; padding: 3px 10px; font-size: 12px; cursor: pointer; }
     .maps { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .maps.one { grid-template-columns: 1fr; }
+    .maps > * { min-width: 0; }
     @media (max-width: 1100px) { .maps { grid-template-columns: 1fr; } }
     .key { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; margin-top: 6px; }
     .key span { display: inline-flex; align-items: center; gap: 5px; }
@@ -55,17 +58,22 @@
     details { background: white; border: 1px solid #d5e8f3; border-radius: 6px; padding: 8px 14px; margin-bottom: 8px; font-size: 13px; line-height: 1.5; }
     details summary { cursor: pointer; font-weight: bold; color: #1a5276; }
     details p, details ul { margin: 6px 0; } details ul { margin-left: 18px; }
+    details.step5 { margin-bottom: 12px; padding: 10px 14px; }
+    details.step5 summary { font-size: 14.5px; }
+    details.step5 summary .num { margin: 0 6px 0 4px; }
+    details.step5 .in { max-width: 420px; }
+    .hide { display: none !important; }
   </style>
 </head>
 <body>
   <header>
     <h1>eDNA River Cross-Section Sampling Design Tool</h1>
-    <p>How many 1-L water samples do you need to estimate the mean eDNA concentration on a river cross section? Work through the five steps.</p>
+    <p>How many 1-L water samples do you need to estimate the mean eDNA concentration on a river cross section? Work through the steps.</p>
   </header>
 
-  <div class="app">
-    <!-- ================= steps ================= -->
-    <div class="steps">
+  <div class="wrap">
+    <!-- ================= steps 1 and 2 ================= -->
+    <div class="row2">
       <div class="card">
         <div class="step-head"><span class="num">1</span><h2>How precise must the estimate be?</h2></div>
         <div class="chips" id="chips">
@@ -73,8 +81,8 @@
           <button class="chip" data-cv="0.20">0.2 &nbsp;Management</button>
           <button class="chip" data-cv="0.30">0.3 &nbsp;Pilot study</button>
         </div>
-        <div class="ctrl"><label>Target CV <span class="v" id="vCvT"></span>
-          <span class="tip" tabindex="0">i<span class="tt">Target CV = standard error of the estimated cross-section mean &divide; the mean. It is a precision criterion, not statistical power. A 95% interval is roughly the mean &plusmn; 2 &times; target CV.</span></span></label>
+        <div class="ctrl"><label>CV<sub>target</sub> <span class="v" id="vCvT"></span>
+          <span class="tip" tabindex="0">i<span class="tt">CV<sub>target</sub> = standard error of the estimated cross-section mean &divide; the mean. It is a precision criterion, not statistical power. A 95% interval is roughly the mean &plusmn; 2 &times; CV<sub>target</sub>.</span></span></label>
           <input type="range" id="cv_target" min="0.05" max="0.60" step="0.01" value="0.20"></div>
         <p class="lay" id="layTarget"></p>
         <span class="klam">Keel et al. reached 0.07&ndash;0.25, median 0.10</span>
@@ -82,101 +90,112 @@
 
       <div class="card">
         <div class="step-head"><span class="num">2</span><h2>How variable is your site?</h2></div>
-        <div class="ctrl"><label>Site CV <span class="v" id="vCvSite"></span>
-          <span class="tip" tabindex="0">i<span class="tt">Site CV = standard deviation &divide; mean of eDNA concentration among single 1-L samples taken across the cross section. It includes field heterogeneity and laboratory measurement error.</span></span></label>
+        <div class="ctrl"><label>CV<sub>site</sub> <span class="v" id="vCvSite"></span>
+          <span class="tip" tabindex="0">i<span class="tt">CV<sub>site</sub> = standard deviation &divide; mean of eDNA concentration among single 1-L samples taken across the cross section. It includes field heterogeneity and laboratory measurement error.</span></span></label>
           <input type="range" id="cv_site" min="0.10" max="2.00" step="0.01" value="0.55"></div>
         <div class="pilot"><span style="width:100%">or from a pilot study:</span>
           <label>mean <input type="number" id="pilot_mean" value="1000" min="0" step="any"></label>
           <label>SD <input type="number" id="pilot_sd" value="550" min="0" step="any"></label>
-          <span class="tip" tabindex="0">i<span class="tt">Enter the mean and standard deviation of concentration among your pilot samples (any units, for example copies per liter). Site CV = SD &divide; mean. Changing the site CV updates the SD for the same mean.</span></span></div>
-        <p class="lay">How much single samples differ from one another: SD &divide; mean of your pilot samples. <b>Doubling it quadruples the samples needed.</b></p>
+          <span class="tip" tabindex="0">i<span class="tt">Enter the mean and standard deviation of concentration among your pilot samples (any units, for example copies per liter). CV<sub>site</sub> = SD &divide; mean. Changing CV<sub>site</sub> updates the SD for the same mean.</span></span></div>
+        <p class="lay">How much single 1-L samples differ from one another. <b>Higher CV<sub>site</sub> &rarr; more 1-L samples.</b></p>
         <span class="klam">Keel et al.: 0.40&ndash;1.43, median 0.55</span>
       </div>
+    </div>
 
+    <!-- ================= step 3 and its graph ================= -->
+    <div class="rowS">
       <div class="card">
-        <div class="step-head"><span class="num">3</span><h2>Describe the cross section</h2></div>
-        <p class="lay">These three only matter for evenly spaced samples. <b>No pilot data on patchiness? Skip this step</b> and use the simple random answer, which is a safe upper bound.</p>
+        <div class="step-head"><span class="num">3</span><h2>How will you place the samples?</h2></div>
+        <label class="choice" id="chRandom"><input type="radio" name="strategy" value="random" checked><b>Simple random</b> <span id="nRandomLab"></span>
+          <span class="d">Sample points picked at random across the width, or samples you cannot space evenly. Steps 1 and 2 are all you need.</span></label>
+        <label class="choice" id="chStrat"><input type="radio" name="strategy" value="stratified"><b>Spatially stratified</b> <span id="nStratLab"></span>
+          <span class="d">Split the width into n equal strips and take one sample at the centre of each, bank to bank. The same or fewer 1-L samples than simple random. Continue to step 4.</span></label>
+      </div>
+      <div class="card">
+        <div class="panel-title" id="randTitle"></div>
+        <div class="panel-sub">The number of 1-L samples needed is where the curve drops below the dashed CV<sub>target</sub> line.</div>
+        <div id="curveRandom"></div>
+      </div>
+    </div>
+
+    <!-- ================= step 4 and its graph (spatially stratified only) ================= -->
+    <div class="rowS" id="rowStrat">
+      <div class="card">
+        <div class="step-head"><span class="num">4</span><h2>Describe the cross section</h2></div>
         <div class="ctrl"><label>Width (m) <span class="v" id="vWidth"></span>
-          <span class="tip" tabindex="0">i<span class="tt">Wetted width of the cross section. Evenly spaced samples on a wider section are farther apart relative to the patch size, so they are less correlated.</span></span></label>
+          <span class="tip" tabindex="0">i<span class="tt">Wetted width of the cross section, bank to bank.</span></span></label>
           <input type="range" id="width_m" min="5" max="150" step="1" value="38"></div>
-        <p class="lay">Wider than the patches &rarr; evenly spaced samples are less alike &rarr; <b>fewer needed</b>.</p>
         <span class="klam">Keel et al.: 34&ndash;45 m, median 38 m</span>
 
         <div class="ctrl"><label>Patchiness <span class="v" id="vP"></span>
           <span class="tip" tabindex="0">i<span class="tt">Spatial proportion of variance, p = 1 &minus; nugget &divide; sill of a semivariogram of pilot samples: the share of the variance among samples that is spatially structured rather than random noise.</span></span></label>
           <input type="range" id="p" min="0" max="0.95" step="0.01" value="0.50"></div>
-        <p class="lay">Share of the variation that comes in patches (neighbouring samples alike) rather than random noise. <b>More patchy &rarr; bigger saving from even spacing.</b></p>
-        <span class="klam">Keel et al.: 0.33 and 0.60 (one estimate per species)</span>
+        <p class="lay">Share of the variation that comes in patches rather than random noise. <b>Higher patchiness &rarr; fewer 1-L samples.</b></p>
+        <span class="klam">Keel et al.: 0.33 Chinook salmon, 0.60 <i>C. shasta</i></span>
 
         <div class="ctrl"><label>Patch size (m) <span class="v" id="vRange"></span>
           <span class="tip" tabindex="0">i<span class="tt">Correlation range of a Mat&eacute;rn (&nu; = 1) spatial model: the distance at which the correlation between two samples falls to about 0.14. Read it from a semivariogram of pilot samples.</span></span></label>
           <input type="range" id="range_m" min="1" max="100" step="1" value="30"></div>
-        <p class="lay">Distance over which samples stay alike. Even spacing <b>saves most when patches are about as large as the section</b>, least when they are tiny or far larger.</p>
-        <span class="klam">Keel et al.: 14 m and 50 m (one estimate per species)</span>
+        <p class="lay">Distance over which samples stay alike. <b>Fewest 1-L samples when patches are about a tenth to a fifth of the width; more when they are smaller or larger.</b></p>
+        <span class="klam">Keel et al.: 14 m Chinook salmon, 50 m <i>C. shasta</i></span>
       </div>
-
       <div class="card">
-        <div class="step-head"><span class="num">4</span><h2>How will you place the samples?</h2></div>
-        <label class="choice" id="chRandom"><input type="radio" name="strategy" value="random"><b>Simple random</b> <span id="nRandomLab"></span>
-          <span class="d">Sample points picked at random across the width, or samples you cannot space evenly. Needs no knowledge of patchiness.</span></label>
-        <label class="choice" id="chStrat"><input type="radio" name="strategy" value="stratified" checked><b>Spatially stratified</b> <span id="nStratLab"></span>
-          <span class="d">Split the width into n equal strips and take one sample at the centre of each, bank to bank. Covers every patch, so it needs no more samples than random, often fewer.</span></label>
+        <div class="panel-title" id="stratTitle"></div>
+        <div class="panel-sub">The same graph for evenly spaced samples, with simple random for comparison.</div>
+        <div id="curveStrat"></div>
       </div>
+    </div>
+    <div class="card" id="skip4">
+      <div class="step-head" style="margin-bottom:0"><span class="num" style="background:#9fb3c2">4</span><h2 style="color:#6b7f8c">Describe the cross section <span style="font-weight:normal">&mdash; only needed for spatially stratified placement</span></h2></div>
+    </div>
 
-      <div class="card">
-        <div class="step-head"><span class="num">5</span><h2>Check a sample number</h2></div>
-        <div class="ctrl"><label>Samples you can afford <span class="v" id="vN"></span>
+    <div class="answer"><div class="big" id="ansBig"></div><div class="sub" id="ansSub"></div></div>
+
+    <!-- ================= step 5 ================= -->
+    <details class="step5">
+      <summary><span class="num">5</span>Exploring other sample sizes</summary>
+      <div class="in">
+        <div class="ctrl"><label>Number of 1-L samples <span class="v" id="vN"></span>
           <span class="tip" tabindex="0">i<span class="tt">Number of 1-L water samples collected on the cross section on one visit. The tool returns the CV of the estimated mean that this many samples achieve.</span></span></label>
           <input type="range" id="n_given" min="1" max="100" step="1" value="9"></div>
         <span class="klam">Keel et al.: 28&ndash;35 per section, median 33</span>
         <div class="check" id="checkBox"></div>
       </div>
+    </details>
+
+    <div class="card" id="simCard">
+      <div style="display:flex; justify-content:space-between; align-items:center">
+        <div class="panel-title">What a cross section like this looks like</div>
+        <button class="plain" id="resim">&#8635; New simulation</button>
+      </div>
+      <div class="panel-sub">A simulated cross section with your CV<sub>site</sub>, patchiness, and patch size. Colour is concentration relative to the section mean.</div>
+      <div id="crossSection"></div>
     </div>
 
-    <!-- ================= results ================= -->
-    <div class="main">
-      <div class="answer"><div class="big" id="ansBig"></div><div class="sub" id="ansSub"></div></div>
-
-      <div class="card">
-        <div class="panel-title">Precision against number of samples</div>
-        <div class="panel-sub">Where a curve drops below the dashed target line is the number of samples you need. The dotted line is your number from step 5.</div>
-        <div id="cvCurve"></div>
-      </div>
-
-      <div class="card">
-        <div style="display:flex; justify-content:space-between; align-items:center">
-          <div class="panel-title">What a cross section like this looks like</div>
-          <button class="plain" id="resim">&#8635; New simulation</button>
-        </div>
-        <div class="panel-sub">A simulated cross section with your site CV, patchiness, and patch size. Colour is concentration relative to the section mean.</div>
-        <div id="crossSection"></div>
-      </div>
-
-      <div class="card">
-        <div class="panel-title">Planning maps: samples needed for any width and site CV</div>
-        <div class="panel-sub">At your target CV, patchiness, and patch size. The white dot is your site.</div>
-        <div class="maps"><div id="mapRandom"></div><div id="mapStrat"></div></div>
-        <div class="key" id="mapKey"></div>
-      </div>
-
-      <details><summary>How the numbers are calculated</summary>
-        <p><b>Simple random.</b> CV(n) = site CV &divide; &radic;n, so n = (site CV &divide; target CV)&sup2; (Cochran 1977).</p>
-        <p><b>Spatially stratified.</b> Concentration across the width is modelled as a share <i>p</i> of spatially correlated variation (Mat&eacute;rn correlation, &nu; = 1, with the chosen range) plus a share 1 &minus; <i>p</i> of independent noise. The CV of the mean of n samples at the centres of n equal strips is site CV &times; &radic;[(<i>p</i> A(n) + (1 &minus; <i>p</i>)/n) &divide; (1 &minus; <i>p</i> c&#772;)], where A(n) is the variance of the difference between the sample mean and the true section mean of the correlated part, and c&#772; is the mean correlation between two random positions on the section. The tool reports the smallest n that meets the target.</p>
-        <p><b>Simulation.</b> A log-normal field with the chosen site CV, patchiness, and patch size in a randomly drawn channel up to 3 m deep. It is an illustration; the sample numbers do not depend on the bed shape or on the simulation.</p>
-      </details>
-      <details><summary>What this tool does not cover</summary>
-        <ul>
-          <li>It concerns the mean of one cross section on one visit, not day-to-day change and not how well one section represents a longer reach.</li>
-          <li>The site CV from a small pilot is itself uncertain, and the samples needed scale with its square. Round up.</li>
-          <li>Patterns with depth are not modelled. In Keel et al. Chinook salmon eDNA declined with depth, so sample both surface and depth.</li>
-          <li>Detection limits and the volume filtered per sample are outside its scope.</li>
-        </ul>
-      </details>
-      <details><summary>Where the Keel et al. values come from</summary>
-        <p>The green tags give the values measured in one study, Keel et al. (in prep.): six cross sections of the Klamath River, California, sampled during one week in April 2021 with 28 to 35 one-liter samples each, for <i>Ceratonova shasta</i> and Chinook salmon (<i>Oncorhynchus tshawytscha</i>) eDNA. Site CV and width are the range and median across sites and species; patchiness and patch size are one estimate per species from spatial models. They describe those sections on those days, not the Klamath River in general, and are offered as a reference point, not as defaults for other sites.</p>
-        <p>Keel, D. J., N. A. Som, M. J. Henderson, and A. P. Kinziger. In prep. <i>Spatial variability in environmental DNA concentrations on river cross sections: implications for sampling design and abundance estimation.</i></p>
-      </details>
+    <div class="card">
+      <div class="panel-title">Planning maps: 1-L samples needed for any width and CV<sub>site</sub></div>
+      <div class="panel-sub" id="mapSub"></div>
+      <div class="maps" id="maps"><div id="mapRandom"></div><div id="mapStrat"></div></div>
+      <div class="key" id="mapKey"></div>
     </div>
+
+    <details><summary>How the numbers are calculated</summary>
+      <p><b>Simple random.</b> CV(n) = CV<sub>site</sub> &divide; &radic;n, so n = (CV<sub>site</sub> &divide; CV<sub>target</sub>)&sup2; (Cochran 1977).</p>
+      <p><b>Spatially stratified.</b> Concentration across the width is modelled as a share <i>p</i> of spatially correlated variation (Mat&eacute;rn correlation, &nu; = 1, with the chosen range) plus a share 1 &minus; <i>p</i> of independent noise. The CV of the mean of n samples at the centres of n equal strips is CV<sub>site</sub> &times; &radic;[(<i>p</i> A(n) + (1 &minus; <i>p</i>)/n) &divide; (1 &minus; <i>p</i> c&#772;)], where A(n) is the variance of the difference between the sample mean and the true section mean of the correlated part, and c&#772; is the mean correlation between two random positions on the section. The tool reports the smallest n at which this CV meets CV<sub>target</sub>.</p>
+      <p><b>Simulation.</b> A log-normal field with the chosen CV<sub>site</sub>, patchiness, and patch size in a randomly drawn channel up to 3 m deep. It is an illustration; the sample numbers do not depend on the bed shape or on the simulation.</p>
+    </details>
+    <details><summary>What this tool does not cover</summary>
+      <ul>
+        <li>It concerns the mean of one cross section on one visit, not day-to-day change and not how well one section represents a longer reach.</li>
+        <li>CV<sub>site</sub> from a small pilot is itself uncertain, and the samples needed scale with its square. Round up.</li>
+        <li>Patterns with depth are not modelled. In Keel et al. Chinook salmon eDNA declined with depth, so sample both surface and depth.</li>
+        <li>Detection limits and the volume filtered per sample are outside its scope.</li>
+      </ul>
+    </details>
+    <details><summary>Where the Keel et al. values come from</summary>
+      <p>The green tags give the values measured in one study, Keel et al. (in prep.): six cross sections of the Klamath River, California, sampled during one week in April 2021 with 28 to 35 one-liter samples each, for <i>Ceratonova shasta</i> and Chinook salmon (<i>Oncorhynchus tshawytscha</i>) eDNA. CV<sub>site</sub> and width are the range and median across sites and species; patchiness and patch size are one estimate per species from spatial models. They describe those sections on those days, not the Klamath River in general, and are offered as a reference point, not as defaults for other sites.</p>
+      <p>Keel, D. J., N. A. Som, M. J. Henderson, and A. P. Kinziger. In prep. <i>Spatial variability in environmental DNA concentrations on river cross sections: implications for sampling design and abundance estimation.</i></p>
+    </details>
   </div>
 
   <script>
@@ -250,41 +269,41 @@
   function tables(rangeM) { if (TAB_RANGE !== rangeM) { TAB = maternTables(rangeM); TAB_RANGE = rangeM; } return TAB; }
   const N_MAX = 500;
   const fmtN = n => n === null || n > N_MAX ? 'more than ' + N_MAX : String(n);
+  const CVT = 'CV<sub>target</sub>', CVS = 'CV<sub>site</sub>';
 
   // ---------- answer, step labels, check ----------
   function renderAnswer(p, T) {
     const nR = nRandom(p.cvSite, p.cvTarget), nS = nStrat(p.cvSite, p.cvTarget, p.widthM, p.p, T, N_MAX);
     const strat = p.strategy === 'stratified', n = strat ? nS : nR;
-    $('nRandomLab').innerHTML = '&rarr; n = ' + fmtN(nR); $('nStratLab').innerHTML = '&rarr; n = ' + fmtN(nS);
+    $('nRandomLab').innerHTML = '&rarr; n = ' + fmtN(nR); $('nStratLab').innerHTML = strat ? '&rarr; n = ' + fmtN(nS) : '';
     $('chRandom').classList.toggle('on', !strat); $('chStrat').classList.toggle('on', strat);
-    $('ansBig').innerHTML = `Collect ${n === null || n > N_MAX ? 'more than ' + N_MAX : 'at least ' + n} one-liter samples, ${strat ? 'evenly spaced across the width' : 'placed at random'}`;
-    const other = strat ? `Placed at random you would need ${fmtN(nR)}.` : `Evenly spaced you would need ${fmtN(nS)}.`;
-    $('ansSub').innerHTML = `for a target CV of ${p.cvTarget.toFixed(2)} at a site CV of ${p.cvSite.toFixed(2)}. ${other}` + (strat && nS !== null && nS < nR ? ` Even spacing saves ${nR - nS} sample${nR - nS === 1 ? '' : 's'}.` : '');
-    const pct = Math.round(p.cvTarget * 100);
-    $('layTarget').innerHTML = `Your estimate of the mean will typically be within about <b>${pct}%</b> of the true value (95 times in 100 within about ${2 * pct}%). <b>Halving the target quadruples the samples needed.</b>`;
+    $('randTitle').innerHTML = `Simple random: n = ${fmtN(nR)}`; $('stratTitle').innerHTML = `Spatially stratified: n = ${fmtN(nS)}`;
+    $('ansBig').innerHTML = `Collect ${n === null || n > N_MAX ? 'more than ' + N_MAX : 'at least ' + n} 1-L samples, ${strat ? 'evenly spaced across the width' : 'placed at random'}`;
+    $('ansSub').innerHTML = `for ${CVT} = ${p.cvTarget.toFixed(2)} at ${CVS} = ${p.cvSite.toFixed(2)}.` + (strat ? ` Placed at random you would need ${fmtN(nR)}.` : '');
+    $('layTarget').innerHTML = `Your estimate of the mean will typically be within about <b>${Math.round(p.cvTarget * 100)}%</b> of the true value. <b>Lower ${CVT} &rarr; more 1-L samples.</b>`;
     const cvR = cvRandom(p.cvSite, p.nGiven), cvS = cvStrat(p.cvSite, p.nGiven, p.widthM, p.p, T), cvG = strat ? cvS : cvR;
-    $('checkBox').innerHTML = `With ${p.nGiven} sample${p.nGiven === 1 ? '' : 's'}, ${strat ? 'evenly spaced' : 'at random'}: CV = <b>${cvG.toFixed(2)}</b> ` +
-      (cvG <= p.cvTarget ? '<span class="ok">meets your target</span>' : '<span class="short">misses your target</span>') +
-      `<br><small style="color:#555">${strat ? 'At random' : 'Evenly spaced'}: ${(strat ? cvR : cvS).toFixed(2)}</small>`;
+    $('checkBox').innerHTML = `${p.nGiven} 1-L sample${p.nGiven === 1 ? '' : 's'}, ${strat ? 'evenly spaced' : 'placed at random'}: CV of the estimated mean = <b>${cvG.toFixed(2)}</b>, ` +
+      (cvG <= p.cvTarget ? `<span class="ok">meets ${CVT}</span>` : `<span class="short">misses ${CVT}</span>`) +
+      (strat ? `<br><small style="color:#555">Placed at random: ${cvR.toFixed(2)}</small>` : '');
     return { nR, nS };
   }
 
-  // ---------- precision curve ----------
-  function renderCurve(p, T, nn) {
-    const need = Math.max(nn.nR, nn.nS || 0, p.nGiven), xMax = Math.min(300, Math.max(60, Math.ceil(need * 1.25 / 10) * 10));
+  // ---------- precision curves: one graph per placement ----------
+  function renderCurve(id, p, T, nn, design) {
+    const strat = design === 'stratified';
+    const need = p.strategy === 'stratified' ? Math.max(nn.nR, nn.nS || 0) : nn.nR, xMax = Math.min(300, Math.max(30, Math.ceil(need * 1.4 / 10) * 10));
     const ns = []; for (let n = 1; n <= xMax; n++) ns.push(n);
-    const strat = p.strategy === 'stratified';
     const line = (name, vals, color, dash, on) => ({ type: 'scatter', mode: 'lines', name, x: ns, y: vals, line: { color, width: on ? 3 : 1.8, dash }, opacity: on ? 1 : 0.6, hovertemplate: 'n = %{x}<br>CV = %{y:.2f}<extra>' + name + '</extra>' });
-    const traces = [line('Simple random', ns.map(n => cvRandom(p.cvSite, n)), '#0072B2', 'solid', !strat),
-                    line('Spatially stratified', ns.map(n => cvStrat(p.cvSite, n, p.widthM, p.p, T)), '#009E73', 'dash', strat)];
-    const pts = [[nn.nR, '#0072B2'], [nn.nS, '#009E73']].filter(a => a[0] !== null && a[0] <= xMax);
+    const traces = [line('Simple random', ns.map(n => cvRandom(p.cvSite, n)), '#0072B2', 'solid', !strat)];
+    if (strat) traces.push(line('Spatially stratified', ns.map(n => cvStrat(p.cvSite, n, p.widthM, p.p, T)), '#009E73', 'dash', true));
+    const pts = (strat ? [[nn.nR, '#0072B2'], [nn.nS, '#009E73']] : [[nn.nR, '#0072B2']]).filter(a => a[0] !== null && a[0] <= xMax);
     traces.push({ type: 'scatter', mode: 'markers+text', x: pts.map(a => a[0]), y: pts.map(() => p.cvTarget), text: pts.map(a => 'n = ' + a[0]), textposition: pts.map(a => a[1] === '#009E73' ? 'bottom left' : 'top right'), textfont: { size: 12, color: pts.map(a => a[1]) }, marker: { size: 10, color: pts.map(a => a[1]), line: { color: 'white', width: 1.5 } }, hoverinfo: 'skip', showlegend: false });
     const yMax = Math.min(p.cvSite * 1.1, 2.2);
-    const layout = { height: 300, margin: { l: 58, r: 20, t: 8, b: 70 }, xaxis: { title: 'Number of 1-L samples (n)', range: [1, xMax], zeroline: false }, yaxis: { title: 'CV of the estimated mean', range: [0, yMax], zeroline: false },
-      legend: { orientation: 'h', x: 0.5, xanchor: 'center', y: -0.25 }, plot_bgcolor: 'white', paper_bgcolor: 'white',
-      shapes: [{ type: 'line', x0: 1, x1: xMax, y0: p.cvTarget, y1: p.cvTarget, line: { dash: 'dash', color: '#444', width: 1.4 } }, { type: 'line', x0: p.nGiven, x1: p.nGiven, y0: 0, y1: yMax, line: { dash: 'dot', color: '#999', width: 1.3 } }],
-      annotations: [{ x: xMax, y: p.cvTarget, text: `target CV ${p.cvTarget.toFixed(2)}`, showarrow: false, xanchor: 'right', yanchor: 'bottom', font: { size: 11, color: '#444' } }] };
-    Plotly.react('cvCurve', traces, layout, { responsive: true, displayModeBar: false });
+    const layout = { height: strat ? 330 : 240, margin: { l: 58, r: 20, t: 8, b: strat ? 70 : 44 }, showlegend: strat, xaxis: { title: 'Number of 1-L samples (n)', range: [1, xMax], zeroline: false }, yaxis: { title: 'CV of the estimated mean', range: [0, yMax], zeroline: false },
+      legend: { orientation: 'h', x: 0.5, xanchor: 'center', y: -0.22 }, plot_bgcolor: 'white', paper_bgcolor: 'white',
+      shapes: [{ type: 'line', x0: 1, x1: xMax, y0: p.cvTarget, y1: p.cvTarget, line: { dash: 'dash', color: '#444', width: 1.4 } }],
+      annotations: [{ x: xMax, y: p.cvTarget, text: `${CVT} = ${p.cvTarget.toFixed(2)}`, showarrow: false, xanchor: 'right', yanchor: 'bottom', font: { size: 11, color: '#444' } }] };
+    Plotly.react(id, traces, layout, { responsive: true, displayModeBar: false });
   }
 
   // ---------- simulated cross section ----------
@@ -298,7 +317,7 @@
     Plotly.react('crossSection', [heat, outline], layout, { responsive: true, displayModeBar: false });
   }
 
-  // ---------- planning maps: x = width, y = site CV, n range written in each colour block ----------
+  // ---------- planning maps: x = width, y = CV_site, n range written in each colour block ----------
   const BREAKS = [0, 3, 5, 10, 15, 20, 30, 50, 100, 250, 500];
   const BAND_LAB = BREAKS.slice(0, -1).map((lo, i) => lo === 0 ? `n ≤ ${BREAKS[1]}` : `n = ${lo + 1}–${BREAKS[i + 1]}`);
   const BAND_COL = ['#FDE725', '#B4DE2C', '#6DCD59', '#35B779', '#1F9E89', '#26828E', '#31688E', '#3E4A89', '#482878', '#440154'];
@@ -336,27 +355,35 @@
     const ann = bandLabels(z);
     if (z.some(r => r.some(v => v === null))) ann.push({ x: 148, y: 1.97, xanchor: 'right', yanchor: 'top', text: `grey: n > ${N_MAX}`, showarrow: false, font: { size: 11, color: '#333' } });
     const layout = { height: 400, margin: { l: 56, r: 12, t: 34, b: 46 }, title: { text: title, x: 0.02, xanchor: 'left', font: { size: 13, color: '#1a5276' } },
-      xaxis: { title: 'Cross-section width (m)', range: [5, 150], zeroline: false }, yaxis: { title: 'Site CV', range: [0.10, 2.0], zeroline: false }, plot_bgcolor: '#d9d9d9', paper_bgcolor: 'white', annotations: ann };
+      xaxis: { title: 'Cross-section width (m)', range: [5, 150], zeroline: false }, yaxis: { title: 'CV<sub>site</sub>', range: [0.10, 2.0], zeroline: false }, plot_bgcolor: '#d9d9d9', paper_bgcolor: 'white', annotations: ann };
     Plotly.react(id, [heat, mark], layout, { responsive: true, displayModeBar: false });
   }
   $('mapKey').innerHTML = BAND_LAB.map((l, i) => `<span><i style="background:${BAND_COL[i]}"></i>${l}</span>`).join('') + `<span><i style="background:#d9d9d9"></i>n &gt; ${N_MAX}</span>`;
 
   // ---------- wiring ----------
   function update(full) {
-    const p = getP(), T = tables(p.rangeM);
+    const p = getP(), T = tables(p.rangeM), strat = p.strategy === 'stratified';
     $('vCvT').textContent = p.cvTarget.toFixed(2); $('vCvSite').textContent = p.cvSite.toFixed(2); $('vWidth').textContent = p.widthM;
     $('vP').textContent = p.p.toFixed(2); $('vRange').textContent = p.rangeM; $('vN').textContent = p.nGiven;
     document.querySelectorAll('#chips .chip').forEach(c => c.classList.toggle('on', Math.abs(+c.dataset.cv - p.cvTarget) < 1e-9));
-    const nn = renderAnswer(p, T); renderCurve(p, T, nn);
-    if (full !== false) { renderCS(p); renderMap('mapRandom', p, T, 'random', 'Simple random (width has no effect)'); renderMap('mapStrat', p, T, 'stratified', `Spatially stratified, patchiness ${p.p.toFixed(2)}, patch size ${p.rangeM} m`); }
+    // step 4, its graph, the simulation and the stratified map belong to spatially stratified placement only
+    $('rowStrat').classList.toggle('hide', !strat); $('skip4').classList.toggle('hide', strat); $('simCard').classList.toggle('hide', !strat);
+    $('mapStrat').classList.toggle('hide', !strat); $('maps').classList.toggle('one', !strat);
+    $('mapSub').innerHTML = `At your ${CVT}${strat ? ', patchiness, and patch size' : ''}. The white dot is your site.`;
+    const nn = renderAnswer(p, T); renderCurve('curveRandom', p, T, nn, 'random'); if (strat) renderCurve('curveStrat', p, T, nn, 'stratified');
+    if (full !== false) {
+      renderMap('mapRandom', p, T, 'random', 'Simple random (width has no effect)');
+      if (strat) { renderCS(p); renderMap('mapStrat', p, T, 'stratified', `Spatially stratified, patchiness ${p.p.toFixed(2)}, patch size ${p.rangeM} m`); }
+      ['curveRandom', 'curveStrat', 'mapRandom', 'mapStrat', 'crossSection'].forEach(id => { if ($(id).offsetParent !== null && $(id).data) Plotly.Plots.resize(id); });
+    }
   }
   ['cv_target', 'width_m', 'p', 'range_m'].forEach(id => $(id).addEventListener('input', () => update()));
-  // step 2: the site CV and the pilot mean and SD keep each other in step
+  // step 2: CV_site and the pilot mean and SD keep each other in step
   const sig = v => +(+v).toPrecision(4);
   $('cv_site').addEventListener('input', () => { const m = +$('pilot_mean').value; if (m > 0) $('pilot_sd').value = sig(m * +$('cv_site').value); update(); });
   ['pilot_mean', 'pilot_sd'].forEach(id => $(id).addEventListener('input', () => { const m = +$('pilot_mean').value, sd = +$('pilot_sd').value; if (m > 0 && sd > 0) { $('cv_site').value = Math.min(2, Math.max(0.1, sd / m)); update(); } }));
   $('n_given').addEventListener('input', () => update(false));
-  document.querySelectorAll('input[name="strategy"]').forEach(el => el.addEventListener('change', () => update(false)));
+  document.querySelectorAll('input[name="strategy"]').forEach(el => el.addEventListener('change', () => update()));
   document.querySelectorAll('#chips .chip').forEach(c => c.addEventListener('click', () => { $('cv_target').value = c.dataset.cv; update(); }));
   $('resim').addEventListener('click', () => { SIM_SEED = (Math.random() * 1e9) | 0; renderCS(getP()); });
   update();
