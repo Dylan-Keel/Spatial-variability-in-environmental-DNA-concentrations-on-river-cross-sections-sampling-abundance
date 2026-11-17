@@ -1,5 +1,5 @@
 ## Sample size calculations for estimating the mean eDNA concentration on a
-## river cross section. Used by Main_Analysis_and_Figures.R (Figures 5, 7, 8
+## river cross section. Used by Main_Analysis_and_Figures.R (Figures 5 and 7
 ## and S14) and by Sampling_Design_App.R.
 ##
 ## Estimand: the mean eDNA concentration on the sampled cross section.
@@ -113,7 +113,7 @@ n_band_labels <- function(br = n_breaks_default) {
 }
 
 contour_panel <- function(grid, title, br = n_breaks_default, mark = NULL,
-                          base_theme = NULL, flip = FALSE, band_text = FALSE) {
+                          base_theme = NULL, flip = FALSE, band_text = FALSE, band_size = 3.6) {
   library(ggplot2)
   labs_b <- n_band_labels(br)
   grid$band <- cut(grid$n, breaks = br, labels = labs_b, right = TRUE, include.lowest = TRUE)
@@ -129,12 +129,12 @@ contour_panel <- function(grid, title, br = n_breaks_default, mark = NULL,
     geom_raster(data = grid[!is.na(grid$n), ], aes(fill = band)) +
     scale_fill_manual(name = "Required samples (n)", limits = labs_b, drop = FALSE,
                       values = setNames(viridisLite::viridis(length(labs_b), direction = -1), labs_b)) +
-    geom_contour(aes(z = n), breaks = br[is.finite(br) & br > 0],
-                 colour = "white", linewidth = 0.3, alpha = 0.7, na.rm = TRUE) +
     scale_x_continuous(expand = c(0, 0)) +
     scale_y_continuous(expand = c(0, 0)) +
     coord_cartesian(xlim = range(grid$x) + if (flip) c(0, 0) else c(0, 0.02), ylim = range(grid$y)) +
     labs(x = if (flip) lab_w else lab_cv, y = if (flip) lab_cv else lab_w, subtitle = title)
+  if (!band_text) g <- g + geom_contour(aes(z = n), breaks = br[is.finite(br) & br > 0],
+                                        colour = "white", linewidth = 0.3, alpha = 0.7, na.rm = TRUE)
   g <- g + (if (is.null(base_theme)) theme_bw() else base_theme) +
     theme(panel.grid = element_blank(),
           plot.subtitle = element_text(face = "bold"))
@@ -147,12 +147,12 @@ contour_panel <- function(grid, title, br = n_breaks_default, mark = NULL,
   if (band_text) {               # the n range written at the centre of each colour block
     ok <- grid[!is.na(grid$band), ]
     cen <- do.call(rbind, lapply(split(ok, droplevels(ok$band)), function(d) {
-      if (nrow(d) < 30) return(NULL)
+      if (nrow(d) < max(30, 0.015 * nrow(grid))) return(NULL)
       i <- which.min((d$x - mean(d$x))^2 / diff(range(grid$x))^2 + (d$y - mean(d$y))^2 / diff(range(grid$y))^2)
       data.frame(x = d$x[i], y = d$y[i], label = paste("n", if (grepl("^[≤>]", d$band[i])) "" else "=", d$band[i]),
                  dark = as.integer(d$band[i]) > 4)
     }))
-    if (!is.null(cen)) g <- g + geom_text(data = cen, aes(x = x, y = y, label = label, colour = dark), size = 3.6, show.legend = FALSE) +
+    if (!is.null(cen)) g <- g + geom_text(data = cen, aes(x = x, y = y, label = label, colour = dark), size = band_size, show.legend = FALSE) +
       scale_colour_manual(values = c("FALSE" = "grey10", "TRUE" = "white"), guide = "none")
   }
   if (!is.null(mark)) {

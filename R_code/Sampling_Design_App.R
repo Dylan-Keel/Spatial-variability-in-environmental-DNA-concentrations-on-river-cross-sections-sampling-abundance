@@ -1,5 +1,5 @@
 ## Sampling design tool for eDNA on a river cross section
-## A step-by-step interactive version of Figures 5, 7, and 8: how many 1-L
+## A step-by-step interactive version of Figures 5 and 7: how many 1-L
 ## samples are needed to estimate the mean eDNA concentration of a cross section.
 ## Run from this folder with: shiny::runApp("Sampling_Design_App.R")
 

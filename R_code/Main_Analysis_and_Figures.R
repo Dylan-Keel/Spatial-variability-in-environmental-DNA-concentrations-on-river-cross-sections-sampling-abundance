@@ -764,60 +764,32 @@ p6d <- effect.plot(GRSpred, "DistanceFromShore.m.z.z", "Scaled distance to shore
 fig6 <- ggarrange(p6a + ggtitle("A"), p6b + ggtitle("B"), p6c + ggtitle("C"), p6d + ggtitle("D"), ncol = 2, nrow = 2, align = "hv")
 save_fig(fig6, "Figure_6", w = FIG_W2, h = 7)
 
-## Figure 7: the general case, n = (sigma / (CV_target x mean))^2, as a lookup
-## chart in measured units: the number of samples needed for a target CV of
-## 0.1, 0.2, or 0.3, given the mean and standard deviation of eDNA concentration
-## from a pilot study. Points are the six cross sections of this study.
-mean.g <- exp(seq(log(100), log(200000), length.out = 300))
-sd.g   <- exp(seq(log(100), log(200000), length.out = 300))
-pts7 <- site.summary %>%
-  transmute(Site = factor(Site, levels = 1:6), `C. shasta` = sd.cs, `O. tshawytscha` = sd.ot, mean.cs, mean.ot) %>%
-  tidyr::pivot_longer(c(`C. shasta`, `O. tshawytscha`), names_to = "species", values_to = "sd") %>%
-  mutate(mean = ifelse(species == "C. shasta", mean.cs, mean.ot), species = factor(species, levels = names(COL_SPECIES)))
-lookup.panel <- function(cv_t, title) {
-  g <- tidyr::expand_grid(mean = mean.g, sd = sd.g) %>% mutate(n = ceiling((sd / (cv_t * mean))^2))
-  g$n[g$n > 500] <- NA
-  labs_b <- n_band_labels(n_breaks_default)
-  g$band <- cut(g$n, breaks = n_breaks_default, labels = labs_b, right = TRUE, include.lowest = TRUE)
-  keys <- data.frame(mean = 1, sd = 1, band = factor(labs_b, levels = labs_b))
-  ggplot(g, aes(x = mean, y = sd)) +
-    geom_tile(data = keys, aes(fill = band), key_glyph = "rect") +
-    geom_raster(data = g[!is.na(g$n), ], aes(fill = band)) +
-    geom_raster(data = g[is.na(g$n), ], fill = "grey85") +
-    scale_fill_manual(name = "Required 1-L samples (n)", limits = labs_b, drop = FALSE,
-                      values = setNames(viridisLite::viridis(length(labs_b), direction = -1), labs_b)) +
-    geom_point(data = pts7, aes(x = mean, y = sd, shape = species), fill = "white", colour = "black", size = 2.4, stroke = 0.7) +
-    geom_text(data = pts7, aes(x = mean, y = sd, label = Site), colour = "black", size = 2.6, vjust = -0.9, show.legend = FALSE) +
-    scale_shape_manual(values = c("C. shasta" = 21, "O. tshawytscha" = 24), name = NULL,
-                       labels = c(expression(italic("C. shasta")), expression(italic("O. tshawytscha")))) +
-    scale_x_log10(labels = scales::label_comma(), expand = c(0, 0)) +
-    scale_y_log10(labels = scales::label_comma(), expand = c(0, 0)) +
-    coord_cartesian(xlim = range(mean.g), ylim = range(sd.g)) +
-    labs(x = "Mean eDNA concentration (copies / L)", y = expression(bold("Standard deviation, " * sigma * " (copies / L)")), subtitle = title) +
-    theme_ms(11) + theme(panel.grid = element_blank(), plot.subtitle = element_text(face = "bold")) +
-    guides(fill = guide_legend(order = 1, nrow = 2, title.position = "top"), shape = guide_legend(order = 2, override.aes = list(size = 2.6)))
-}
-fig7 <- ggarrange(lookup.panel(0.1, "A)  Target CV 0.1 (research)"),
-                  lookup.panel(0.2, "B)  Target CV 0.2 (management)"),
-                  lookup.panel(0.3, "C)  Target CV 0.3 (pilot work)"),
-                  ncol = 1, nrow = 3, common.legend = TRUE, legend = "bottom")
-save_fig(fig7, "Figure_7", w = FIG_W15, h = 11)
-
-## Figure 8: samples required against site CV and section width, under random
-## placement and under stratified placement at three spatial proportions of
-## variance
-CONTOUR.RANGE <- 30
-tab.c <- matern_tables(CONTOUR.RANGE)
+## Figure 7: number of 1-L samples needed to estimate the mean eDNA
+## concentration of a cross section, against section width and site CV, in the
+## layout of the sampling design tool. Rows are target CVs for research (0.1)
+## and management (0.2). Columns are simple random placement, n = (CV_site /
+## CV_target)^2, and spatially stratified placement under the spatial structure
+## estimated for each species. Points are the six cross sections of this study.
 cv.g <- seq(0.10, 1.50, by = 0.01); w.g <- seq(5, 150, by = 1)
-grids8 <- c(list(list(g = n_required_grid(cv.g, w.g, 0.2, 0, tab.c, "random", 500), t = "A)  Simple random (any width)")),
-            Map(function(p, L) list(g = n_required_grid(cv.g, w.g, 0.2, p, tab.c, "stratified", 500),
-                                    t = sprintf("%s)  Stratified, p = %.2f", L, p)),
-                c(0.25, 0.5, 0.75), c("B", "C", "D")))
-fig8 <- ggarrange(plotlist = lapply(grids8, function(x) contour_panel(x$g, x$t, base_theme = theme_ms(11))),
-                  ncol = 2, nrow = 2, common.legend = TRUE, legend = "bottom")
-fig8 <- annotate_figure(fig8, top = text_grob(sprintf("Target CV 0.20 for the section mean, correlation range %d m", CONTOUR.RANGE),
-                                              face = "bold", size = 12))
-save_fig(fig8, "Figure_8", w = FIG_W2, h = 7.6)
+br7  <- c(0, 3, 5, 10, 15, 20, 30, 50, 100, 250, 500)
+col7 <- list(list(lab = "Simple random", design = "random", sp = names(COL_SPECIES), par = species.par[[1]], it = FALSE),
+             list(lab = "Stratified, C. shasta", design = "stratified", sp = "C. shasta", par = species.par[["C. shasta"]]),
+             list(lab = "Stratified, O. tshawytscha", design = "stratified", sp = "O. tshawytscha", par = species.par[["O. tshawytscha"]]))
+panel7 <- function(cv_t, k, letter) {
+  d <- col7[[k]]
+  g <- n_required_grid(cv.g, w.g, cv_t, if (d$design == "random") 0 else d$par$p, matern_tables(d$par$range_m), d$design, 500)
+  contour_panel(g, sprintf("%s)  %s", letter, d$lab), br = br7, base_theme = theme_ms(9),
+                flip = TRUE, band_text = TRUE, band_size = 2.4) +
+    geom_point(data = site.stats[site.stats$species %in% d$sp, ], aes(x = W, y = cv, shape = species), inherit.aes = FALSE,
+               fill = "white", colour = "black", size = 1.8, stroke = 0.6) +
+    scale_shape_manual(values = c("C. shasta" = 21, "O. tshawytscha" = 24), guide = "none") +
+    theme(legend.position = "none", plot.subtitle = element_text(size = 9), plot.margin = margin(4, 10, 4, 4))
+}
+row7 <- function(cv_t, letters, use) annotate_figure(
+  ggarrange(panel7(cv_t, 1, letters[1]), panel7(cv_t, 2, letters[2]), panel7(cv_t, 3, letters[3]), ncol = 3),
+  left = text_grob(sprintf("Target CV %.1f (%s)", cv_t, use), rot = 90, face = "bold", size = 10))
+fig7 <- ggarrange(row7(0.1, c("A", "B", "C"), "research"), row7(0.2, c("D", "E", "F"), "management"), ncol = 1)
+save_fig(fig7, "Figure_7", w = FIG_W2, h = 5.6)
 
 #### 7. supporting information figures ####
 ## Supporting Information figures are numbered S1, S2, ... as required by the
