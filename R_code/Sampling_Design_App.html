@@ -62,6 +62,7 @@
     details.step5 summary { font-size: 14.5px; }
     details.step5 summary .num { margin: 0 6px 0 4px; }
     details.step5 .in { max-width: 420px; }
+    #crossSection { height: 230px; } #curveRandom { height: 240px; } #curveStrat { height: 270px; } #mapRandom, #mapStrat { height: 400px; }
     .hide { display: none !important; }
   </style>
 </head>
@@ -89,7 +90,7 @@
       </div>
 
       <div class="card">
-        <div class="step-head"><span class="num">2</span><h2>How variable is your site?</h2></div>
+        <div class="step-head"><span class="num">2</span><h2>How variable is eDNA concentration on your cross section?</h2></div>
         <div class="ctrl"><label>CV<sub>site</sub> <span class="v" id="vCvSite"></span>
           <span class="tip" tabindex="0">i<span class="tt">CV<sub>site</sub> = standard deviation &divide; mean of eDNA concentration among single 1-L samples taken across the cross section. It includes field heterogeneity and laboratory measurement error.</span></span></label>
           <input type="range" id="cv_site" min="0.10" max="2.00" step="0.01" value="0.55"></div>
@@ -139,14 +140,27 @@
         <p class="lay">Distance over which samples stay alike. <b>Fewest 1-L samples when patches are about a tenth to a fifth of the width; more when they are smaller or larger.</b></p>
         <span class="klam">Keel et al.: 14 m Chinook salmon, 50 m <i>C. shasta</i></span>
       </div>
-      <div class="card">
-        <div class="panel-title" id="stratTitle"></div>
-        <div class="panel-sub">The same graph for evenly spaced samples, with simple random for comparison.</div>
-        <div id="curveStrat"></div>
+      <div id="stratRight">
+        <div class="card">
+          <div class="panel-title" id="stratTitle"></div>
+          <div class="panel-sub">The same graph for evenly spaced samples, with simple random for comparison.</div>
+          <div id="curveStrat"></div>
+        </div>
       </div>
     </div>
     <div class="card" id="skip4">
       <div class="step-head" style="margin-bottom:0"><span class="num" style="background:#9fb3c2">4</span><h2 style="color:#6b7f8c">Describe the cross section <span style="font-weight:normal">&mdash; only needed for spatially stratified placement</span></h2></div>
+    </div>
+    <!-- the simulated cross section: here for simple random, beside step 4 for spatially stratified -->
+    <div id="simHome">
+      <div class="card" id="simCard">
+        <div style="display:flex; justify-content:space-between; align-items:center">
+          <div class="panel-title">What your cross section could look like</div>
+          <button class="plain" id="resim">&#8635; New simulation</button>
+        </div>
+        <div class="panel-sub" id="simSub"></div>
+        <div id="crossSection"></div>
+      </div>
     </div>
 
     <div class="answer"><div class="big" id="ansBig"></div><div class="sub" id="ansSub"></div></div>
@@ -162,15 +176,6 @@
         <div class="check" id="checkBox"></div>
       </div>
     </details>
-
-    <div class="card" id="simCard">
-      <div style="display:flex; justify-content:space-between; align-items:center">
-        <div class="panel-title">What a cross section like this looks like</div>
-        <button class="plain" id="resim">&#8635; New simulation</button>
-      </div>
-      <div class="panel-sub">A simulated cross section with your CV<sub>site</sub>, patchiness, and patch size. Colour is concentration relative to the section mean.</div>
-      <div id="crossSection"></div>
-    </div>
 
     <div class="card">
       <div class="panel-title">Planning maps: 1-L samples needed for any width and CV<sub>site</sub></div>
@@ -299,8 +304,8 @@
     const pts = (strat ? [[nn.nR, '#0072B2'], [nn.nS, '#009E73']] : [[nn.nR, '#0072B2']]).filter(a => a[0] !== null && a[0] <= xMax);
     traces.push({ type: 'scatter', mode: 'markers+text', x: pts.map(a => a[0]), y: pts.map(() => p.cvTarget), text: pts.map(a => 'n = ' + a[0]), textposition: pts.map(a => a[1] === '#009E73' ? 'bottom left' : 'top right'), textfont: { size: 12, color: pts.map(a => a[1]) }, marker: { size: 10, color: pts.map(a => a[1]), line: { color: 'white', width: 1.5 } }, hoverinfo: 'skip', showlegend: false });
     const yMax = Math.min(p.cvSite * 1.1, 2.2);
-    const layout = { height: strat ? 330 : 240, margin: { l: 58, r: 20, t: 8, b: strat ? 70 : 44 }, showlegend: strat, xaxis: { title: 'Number of 1-L samples (n)', range: [1, xMax], zeroline: false }, yaxis: { title: 'CV of the estimated mean', range: [0, yMax], zeroline: false },
-      legend: { orientation: 'h', x: 0.5, xanchor: 'center', y: -0.22 }, plot_bgcolor: 'white', paper_bgcolor: 'white',
+    const layout = { height: strat ? 270 : 240, margin: { l: 58, r: 20, t: 8, b: 44 }, showlegend: strat, xaxis: { title: 'Number of 1-L samples (n)', range: [1, xMax], zeroline: false }, yaxis: { title: 'CV of the estimated mean', range: [0, yMax], zeroline: false },
+      legend: { x: 0.99, xanchor: 'right', y: 0.99, yanchor: 'top', bgcolor: 'rgba(255,255,255,0.8)' }, plot_bgcolor: 'white', paper_bgcolor: 'white',
       shapes: [{ type: 'line', x0: 1, x1: xMax, y0: p.cvTarget, y1: p.cvTarget, line: { dash: 'dash', color: '#444', width: 1.4 } }],
       annotations: [{ x: xMax, y: p.cvTarget, text: `${CVT} = ${p.cvTarget.toFixed(2)}`, showarrow: false, xanchor: 'right', yanchor: 'bottom', font: { size: 11, color: '#444' } }] };
     Plotly.react(id, traces, layout, { responsive: true, displayModeBar: false });
@@ -366,14 +371,17 @@
     $('vCvT').textContent = p.cvTarget.toFixed(2); $('vCvSite').textContent = p.cvSite.toFixed(2); $('vWidth').textContent = p.widthM;
     $('vP').textContent = p.p.toFixed(2); $('vRange').textContent = p.rangeM; $('vN').textContent = p.nGiven;
     document.querySelectorAll('#chips .chip').forEach(c => c.classList.toggle('on', Math.abs(+c.dataset.cv - p.cvTarget) < 1e-9));
-    // step 4, its graph, the simulation and the stratified map belong to spatially stratified placement only
-    $('rowStrat').classList.toggle('hide', !strat); $('skip4').classList.toggle('hide', strat); $('simCard').classList.toggle('hide', !strat);
+    // step 4, its graph, and the stratified map belong to spatially stratified placement only
+    $('rowStrat').classList.toggle('hide', !strat); $('skip4').classList.toggle('hide', strat); (strat ? $('stratRight') : $('simHome')).appendChild($('simCard'));
+    $('simSub').innerHTML = strat ? `A simulated cross section with your ${CVS}, width, patchiness, and patch size. It changes as you move the sliders. Colour is concentration relative to the section mean.`
+                                  : `A simulated cross section with your ${CVS}. Colour is concentration relative to the section mean. Width, patchiness, and patch size are set in step 4 under spatially stratified placement.`;
     $('mapStrat').classList.toggle('hide', !strat); $('maps').classList.toggle('one', !strat);
     $('mapSub').innerHTML = `At your ${CVT}${strat ? ', patchiness, and patch size' : ''}. The white dot is your site.`;
     const nn = renderAnswer(p, T); renderCurve('curveRandom', p, T, nn, 'random'); if (strat) renderCurve('curveStrat', p, T, nn, 'stratified');
     if (full !== false) {
       renderMap('mapRandom', p, T, 'random', 'Simple random (width has no effect)');
-      if (strat) { renderCS(p); renderMap('mapStrat', p, T, 'stratified', `Spatially stratified, patchiness ${p.p.toFixed(2)}, patch size ${p.rangeM} m`); }
+      renderCS(p);
+      if (strat) { renderMap('mapStrat', p, T, 'stratified', `Spatially stratified, patchiness ${p.p.toFixed(2)}, patch size ${p.rangeM} m`); }
       ['curveRandom', 'curveStrat', 'mapRandom', 'mapStrat', 'crossSection'].forEach(id => { if ($(id).offsetParent !== null && $(id).data) Plotly.Plots.resize(id); });
     }
   }

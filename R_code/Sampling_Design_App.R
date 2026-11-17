@@ -41,6 +41,11 @@ klam <- function(text) tags$span(class = "klam", HTML(text))
 step <- function(num, title, ...) div(class = "card", div(class = "step-head", span(class = "num", num), h2(title)), ...)
 slider <- function(id, label, min, max, value, step) sliderInput(id, label, min = min, max = max, value = value, step = step, ticks = FALSE, width = "100%")
 
+## the simulated cross section: beside step 4 for spatially stratified placement, below step 3 for simple random
+sim_card <- function(plot_id, button_id, text)
+  div(class = "card", div(class = "panel-title", "What your cross section could look like", actionButton(button_id, "↻ New simulation", class = "btn-xs", style = "float:right")),
+      div(class = "panel-sub", HTML(text)), plotOutput(plot_id, height = "230px"))
+
 ui <- fluidPage(
   tags$head(tags$style(HTML("
     body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 13.5px; background: #f5f7fa; color: #2b2b2b; }
@@ -82,7 +87,7 @@ ui <- fluidPage(
       actionButton("cv03", HTML("0.3 &nbsp;Pilot study"), class = "chip"),
       slider("cv_target", tip(CVT, "v_cvt", "CV<sub>target</sub> = standard error of the estimated cross-section mean &divide; the mean. It is a precision criterion, not statistical power. A 95% interval is roughly the mean &plusmn; 2 &times; CV<sub>target</sub>."), 0.05, 0.60, 0.20, 0.01),
       uiOutput("lay_target"), klam("Keel et al. reached 0.07&ndash;0.25, median 0.10"))),
-    column(6, step(2, "How variable is your site?",
+    column(6, step(2, "How variable is eDNA concentration on your cross section?",
       slider("cv_site", tip(CVS, "v_cvs", "CV<sub>site</sub> = standard deviation &divide; mean of eDNA concentration among single 1-L samples taken across the cross section. It includes field heterogeneity and laboratory measurement error."), 0.10, 2.00, 0.55, 0.01),
       div(class = "pilot", span(style = "width:100%", "or from a pilot study:"),
           div(numericInput("pilot_mean", "mean", value = 1000, min = 0, width = "95px")), div(numericInput("pilot_sd", "SD", value = 550, min = 0, width = "95px")),
@@ -111,9 +116,11 @@ ui <- fluidPage(
       lay("Distance over which samples stay alike. <b>Fewest 1-L samples when patches are about a tenth to a fifth of the width; more when they are smaller or larger.</b>"), klam("Keel et al.: 14 m Chinook salmon, 50 m <i>C. shasta</i>"))),
     column(8, div(class = "card", div(class = "panel-title", textOutput("strat_title", inline = TRUE)),
       div(class = "panel-sub", "The same graph for evenly spaced samples, with simple random for comparison."),
-      plotOutput("curve_strat", height = "330px"))))),
+      plotOutput("curve_strat", height = "270px")),
+      sim_card("cross_section", "resim", "A simulated cross section with your CV<sub>site</sub>, width, patchiness, and patch size. It changes as you move the sliders. Colour is concentration relative to the section mean.")))),
   conditionalPanel("input.strategy == 'random'",
-    div(class = "card skip", div(class = "step-head", span(class = "num", 4), h2(HTML("Describe the cross section <span style='font-weight:normal'>&mdash; only needed for spatially stratified placement</span>"))))),
+    div(class = "card skip", div(class = "step-head", span(class = "num", 4), h2(HTML("Describe the cross section <span style='font-weight:normal'>&mdash; only needed for spatially stratified placement</span>")))),
+    sim_card("cross_section_r", "resim_r", "A simulated cross section with your CV<sub>site</sub>. Colour is concentration relative to the section mean. Width, patchiness, and patch size are set in step 4 under spatially stratified placement.")),
 
   uiOutput("answer"),
 
@@ -123,10 +130,6 @@ ui <- fluidPage(
       slider("n_given", tip("Number of 1-L samples", "v_n", "Number of 1-L water samples collected on the cross section on one visit. The tool returns the CV of the estimated mean that this many samples achieve."), 1, 100, 9, 1),
       klam("Keel et al.: 28&ndash;35 per section, median 33"), uiOutput("check"))),
 
-  conditionalPanel("input.strategy == 'stratified'",
-    div(class = "card", div(class = "panel-title", "What a cross section like this looks like", actionButton("resim", "↻ New simulation", class = "btn-xs", style = "float:right")),
-        div(class = "panel-sub", HTML("A simulated cross section with your CV<sub>site</sub>, patchiness, and patch size. Colour is concentration relative to the section mean.")),
-        plotOutput("cross_section", height = "230px"))),
   div(class = "card", div(class = "panel-title", HTML("Planning maps: 1-L samples needed for any width and CV<sub>site</sub>")),
       div(class = "panel-sub", uiOutput("map_sub", inline = TRUE)),
       plotOutput("maps", height = "430px")),
@@ -147,7 +150,7 @@ ui <- fluidPage(
 server <- function(input, output, session) {
   tab <- reactive(matern_tables(input$range_m))
   sim_seed <- reactiveVal(42)
-  observeEvent(input$resim, sim_seed(sample.int(1e6, 1)))
+  observeEvent(c(input$resim, input$resim_r), sim_seed(sample.int(1e6, 1)), ignoreInit = TRUE)
   observeEvent(input$cv01, updateSliderInput(session, "cv_target", value = 0.1))
   observeEvent(input$cv02, updateSliderInput(session, "cv_target", value = 0.2))
   observeEvent(input$cv03, updateSliderInput(session, "cv_target", value = 0.3))
@@ -217,7 +220,7 @@ server <- function(input, output, session) {
   output$curve_random <- renderPlot(curve_plot("random"))
   output$curve_strat  <- renderPlot(curve_plot("stratified"))
 
-  output$cross_section <- renderPlot({
+  cross_section_plot <- function() {
     W <- input$width_m
     gd <- matern_field(W, cv_site = input$cv_site, p = input$p, range_m = input$range_m, seed = sim_seed())
     outline <- data.frame(x = seq(0, W, length.out = 300)); outline$y <- -bed_profile(sim_seed())(outline$x / W)
@@ -231,7 +234,9 @@ server <- function(input, output, session) {
       scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0.02, 0), labels = abs) +
       labs(x = "Distance from left bank (m)", y = "Depth (m)") +
       theme_bw(base_size = 13) + theme(panel.grid = element_blank(), axis.title = element_text(face = "bold"))
-  })
+  }
+  output$cross_section   <- renderPlot(cross_section_plot())
+  output$cross_section_r <- renderPlot(cross_section_plot())
 
   ## planning maps: width on the x axis, CV_site on the y axis, n range written in each colour block
   output$maps <- renderPlot({
