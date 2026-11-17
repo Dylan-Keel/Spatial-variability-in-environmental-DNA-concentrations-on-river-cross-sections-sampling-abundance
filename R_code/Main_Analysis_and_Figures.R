@@ -772,13 +772,16 @@ save_fig(fig6, "Figure_6", w = FIG_W2, h = 7)
 ## estimated for each species. Points are the six cross sections of this study.
 cv.g <- seq(0.10, 1.50, by = 0.01); w.g <- seq(5, 150, by = 1)
 br7  <- c(0, 3, 5, 10, 15, 20, 30, 50, 100, 250, 500)
-col7 <- list(list(lab = "Simple random", design = "random", sp = names(COL_SPECIES), par = species.par[[1]], it = FALSE),
+col7 <- list(list(lab = "Simple random", design = "random", sp = names(COL_SPECIES), par = species.par[[1]]),
              list(lab = "Stratified, C. shasta", design = "stratified", sp = "C. shasta", par = species.par[["C. shasta"]]),
              list(lab = "Stratified, O. tshawytscha", design = "stratified", sp = "O. tshawytscha", par = species.par[["O. tshawytscha"]]))
 panel7 <- function(cv_t, k, letter) {
   d <- col7[[k]]
   g <- n_required_grid(cv.g, w.g, cv_t, if (d$design == "random") 0 else d$par$p, matern_tables(d$par$range_m), d$design, 500)
-  contour_panel(g, sprintf("%s)  %s", letter, d$lab), br = br7, base_theme = theme_ms(9),
+  ## panel titles as expressions so that the species names are set in italics
+  ttl <- if (d$design == "random") bquote(bold(.(paste0(letter, ")  ", d$lab)))) else
+    bquote(bold(.(paste0(letter, ")  Stratified, "))) * bolditalic(.(d$sp)))
+  contour_panel(g, ttl, br = br7, base_theme = theme_ms(9),
                 flip = TRUE, band_text = TRUE, band_size = 2.4) +
     geom_point(data = site.stats[site.stats$species %in% d$sp, ], aes(x = W, y = cv, shape = species), inherit.aes = FALSE,
                fill = "white", colour = "black", size = 1.8, stroke = 0.6) +
