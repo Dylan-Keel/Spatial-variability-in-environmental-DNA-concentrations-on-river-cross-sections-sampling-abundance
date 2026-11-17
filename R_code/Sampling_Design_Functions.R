@@ -65,13 +65,6 @@ A_stratified <- function(n_vec, W, tab) {
   }, numeric(1))
 }
 
-# A for any set of lateral positions on the section (the samples as collected)
-A_positions <- function(xs, W, tab) {
-  xs <- pmin(pmax(xs, 0), W)
-  D  <- abs(outer(xs, xs, "-"))
-  mean(.interp(tab, "c", as.vector(D))) - 2 * mean(g_point(xs, W, tab)) + cbar_random(W, tab)
-}
-
 # ---- CV(n) under each design / estimand -------------------------------------
 cv_random      <- function(cv_site, n) cv_site / sqrt(n)
 cv_stratified  <- function(cv_site, n, W, p, tab) {
@@ -79,11 +72,6 @@ cv_stratified  <- function(cv_site, n, W, p, tab) {
   cWW <- cbar_random(W, tab)
   A   <- A_stratified(n, W, tab)
   cv_site * sqrt((p * A + (1 - p) / n) / (1 - p * cWW))
-}
-cv_positions   <- function(cv_site, xs, W, p, tab) {
-  n <- length(xs)
-  if (p <= 0) return(cv_site / sqrt(n))
-  cv_site * sqrt((p * A_positions(xs, W, tab) + (1 - p) / n) / (1 - p * cbar_random(W, tab)))
 }
 icc_section    <- function(W, p, tab) p * cbar_random(W, tab)
 
@@ -125,14 +113,18 @@ n_band_labels <- function(br = n_breaks_default) {
 }
 
 contour_panel <- function(grid, title, br = n_breaks_default, mark = NULL,
-                          base_theme = NULL, others = NULL) {
+                          base_theme = NULL, flip = FALSE, band_text = FALSE) {
   library(ggplot2)
   labs_b <- n_band_labels(br)
   grid$band <- cut(grid$n, breaks = br, labels = labs_b, right = TRUE, include.lowest = TRUE)
+  ## flip = TRUE puts width on the x axis and site CV on the y axis
+  grid$x <- if (flip) grid$width else grid$cv_site
+  grid$y <- if (flip) grid$cv_site else grid$width
   na_part <- grid[is.na(grid$n), ]
   ## an off-canvas tile for every band so each one gets a legend key
-  keys <- data.frame(cv_site = min(grid$cv_site) - 10, width = min(grid$width) - 10, band = factor(labs_b, levels = labs_b))
-  g <- ggplot(grid, aes(x = cv_site, y = width)) +
+  keys <- data.frame(x = min(grid$x) - 1e3, y = min(grid$y) - 1e3, band = factor(labs_b, levels = labs_b))
+  lab_cv <- expression(bold("Site CV  (" * sigma / mu * ")")); lab_w <- "Cross-section width (m)"
+  g <- ggplot(grid, aes(x = x, y = y)) +
     geom_tile(data = keys, aes(fill = band), key_glyph = "rect") +
     geom_raster(data = grid[!is.na(grid$n), ], aes(fill = band)) +
     scale_fill_manual(name = "Required samples (n)", limits = labs_b, drop = FALSE,
@@ -141,27 +133,31 @@ contour_panel <- function(grid, title, br = n_breaks_default, mark = NULL,
                  colour = "white", linewidth = 0.3, alpha = 0.7, na.rm = TRUE) +
     scale_x_continuous(expand = c(0, 0)) +
     scale_y_continuous(expand = c(0, 0)) +
-    coord_cartesian(xlim = range(grid$cv_site) + c(0, 0.02), ylim = range(grid$width)) +
-    labs(x = expression(bold("Site CV  (" * sigma / mu * ")")),
-         y = "Cross-section width (m)", subtitle = title)
+    coord_cartesian(xlim = range(grid$x) + if (flip) c(0, 0) else c(0, 0.02), ylim = range(grid$y)) +
+    labs(x = if (flip) lab_w else lab_cv, y = if (flip) lab_cv else lab_w, subtitle = title)
   g <- g + (if (is.null(base_theme)) theme_bw() else base_theme) +
     theme(panel.grid = element_blank(),
           plot.subtitle = element_text(face = "bold"))
   if (nrow(na_part) > 0) {
     g <- g + geom_raster(data = na_part, fill = "grey85") +
-      annotate("text", x = max(grid$cv_site), y = max(grid$width),
-               label = paste0("unachievable within ", attr(grid, "n_max"), " samples"),
+      annotate("text", x = max(grid$x), y = max(grid$y),
+               label = if (band_text) paste0("grey: n > ", attr(grid, "n_max")) else paste0("unachievable within ", attr(grid, "n_max"), " samples"),
                hjust = 1.05, vjust = 1.8, size = 3, colour = "grey30")
   }
-  if (!is.null(others)) {        # labelled points, e.g. the study sites
-    g <- g + geom_point(data = others, aes(x = cv_site, y = width), shape = 21, size = 2.2,
-                        fill = "white", colour = "black", stroke = 0.6, alpha = 0.85, inherit.aes = FALSE) +
-      geom_text(data = others, aes(x = cv_site, y = width, label = label), colour = "white",
-                size = 2.8, vjust = -0.9, inherit.aes = FALSE)
+  if (band_text) {               # the n range written at the centre of each colour block
+    ok <- grid[!is.na(grid$band), ]
+    cen <- do.call(rbind, lapply(split(ok, droplevels(ok$band)), function(d) {
+      if (nrow(d) < 30) return(NULL)
+      i <- which.min((d$x - mean(d$x))^2 / diff(range(grid$x))^2 + (d$y - mean(d$y))^2 / diff(range(grid$y))^2)
+      data.frame(x = d$x[i], y = d$y[i], label = paste("n", if (grepl("^[≤>]", d$band[i])) "" else "=", d$band[i]),
+                 dark = as.integer(d$band[i]) > 4)
+    }))
+    if (!is.null(cen)) g <- g + geom_text(data = cen, aes(x = x, y = y, label = label, colour = dark), size = 3.6, show.legend = FALSE) +
+      scale_colour_manual(values = c("FALSE" = "grey10", "TRUE" = "white"), guide = "none")
   }
   if (!is.null(mark)) {
-    g <- g + annotate("point", x = mark$cv_site, y = mark$width, shape = 21,
-                      size = 3.5, fill = "white", colour = "black", stroke = 1.2)
+    g <- g + annotate("point", x = if (flip) mark$width else mark$cv_site, y = if (flip) mark$cv_site else mark$width,
+                      shape = 21, size = 3.5, fill = "white", colour = "black", stroke = 1.2)
   }
   g
 }
