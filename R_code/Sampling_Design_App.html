@@ -25,6 +25,8 @@
     .ctrl label { display: block; font-size: 12.5px; font-weight: bold; color: #333; margin-bottom: 2px; }
     .ctrl .v { color: #1a5276; }
     .ctrl input[type=range] { width: 100%; accent-color: #2980b9; cursor: pointer; }
+    .pilot { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12.5px; color: #444; margin: 4px 0 6px 0; }
+    .pilot input { width: 78px; padding: 3px 5px; border: 1px solid #c8d8ea; border-radius: 3px; font-size: 12.5px; }
     .chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0; }
     .chip { border: 1px solid #2980b9; background: white; color: #1a5276; border-radius: 16px; padding: 4px 11px; font-size: 12.5px; cursor: pointer; }
     .chip.on { background: #2980b9; color: white; }
@@ -75,7 +77,7 @@
           <span class="tip" tabindex="0">i<span class="tt">Target CV = standard error of the estimated cross-section mean &divide; the mean. It is a precision criterion, not statistical power. A 95% interval is roughly the mean &plusmn; 2 &times; target CV.</span></span></label>
           <input type="range" id="cv_target" min="0.05" max="0.60" step="0.01" value="0.20"></div>
         <p class="lay" id="layTarget"></p>
-        <span class="klam">Klamath 2021 reached 0.07&ndash;0.25, median 0.10</span>
+        <span class="klam">Keel et al. reached 0.07&ndash;0.25, median 0.10</span>
       </div>
 
       <div class="card">
@@ -83,8 +85,12 @@
         <div class="ctrl"><label>Site CV <span class="v" id="vCvSite"></span>
           <span class="tip" tabindex="0">i<span class="tt">Site CV = standard deviation &divide; mean of eDNA concentration among single 1-L samples taken across the cross section. It includes field heterogeneity and laboratory measurement error.</span></span></label>
           <input type="range" id="cv_site" min="0.10" max="2.00" step="0.01" value="0.55"></div>
-        <p class="lay">How much single samples differ from one another. Take it from a pilot study: SD &divide; mean of your samples. <b>Doubling it quadruples the samples needed.</b></p>
-        <span class="klam">Klamath: 0.40&ndash;1.43, median 0.55</span>
+        <div class="pilot"><span style="width:100%">or from a pilot study:</span>
+          <label>mean <input type="number" id="pilot_mean" value="1000" min="0" step="any"></label>
+          <label>SD <input type="number" id="pilot_sd" value="550" min="0" step="any"></label>
+          <span class="tip" tabindex="0">i<span class="tt">Enter the mean and standard deviation of concentration among your pilot samples (any units, for example copies per liter). Site CV = SD &divide; mean. Changing the site CV updates the SD for the same mean.</span></span></div>
+        <p class="lay">How much single samples differ from one another: SD &divide; mean of your pilot samples. <b>Doubling it quadruples the samples needed.</b></p>
+        <span class="klam">Keel et al.: 0.40&ndash;1.43, median 0.55</span>
       </div>
 
       <div class="card">
@@ -94,19 +100,19 @@
           <span class="tip" tabindex="0">i<span class="tt">Wetted width of the cross section. Evenly spaced samples on a wider section are farther apart relative to the patch size, so they are less correlated.</span></span></label>
           <input type="range" id="width_m" min="5" max="150" step="1" value="38"></div>
         <p class="lay">Wider than the patches &rarr; evenly spaced samples are less alike &rarr; <b>fewer needed</b>.</p>
-        <span class="klam">Klamath: 34&ndash;45 m, median 38 m</span>
+        <span class="klam">Keel et al.: 34&ndash;45 m, median 38 m</span>
 
         <div class="ctrl"><label>Patchiness <span class="v" id="vP"></span>
           <span class="tip" tabindex="0">i<span class="tt">Spatial proportion of variance, p = 1 &minus; nugget &divide; sill of a semivariogram of pilot samples: the share of the variance among samples that is spatially structured rather than random noise.</span></span></label>
           <input type="range" id="p" min="0" max="0.95" step="0.01" value="0.50"></div>
         <p class="lay">Share of the variation that comes in patches (neighbouring samples alike) rather than random noise. <b>More patchy &rarr; bigger saving from even spacing.</b></p>
-        <span class="klam">Klamath: 0.33 and 0.60 (one estimate per species)</span>
+        <span class="klam">Keel et al.: 0.33 and 0.60 (one estimate per species)</span>
 
         <div class="ctrl"><label>Patch size (m) <span class="v" id="vRange"></span>
           <span class="tip" tabindex="0">i<span class="tt">Correlation range of a Mat&eacute;rn (&nu; = 1) spatial model: the distance at which the correlation between two samples falls to about 0.14. Read it from a semivariogram of pilot samples.</span></span></label>
           <input type="range" id="range_m" min="1" max="100" step="1" value="30"></div>
         <p class="lay">Distance over which samples stay alike. Even spacing <b>saves most when patches are about as large as the section</b>, least when they are tiny or far larger.</p>
-        <span class="klam">Klamath: 14 m and 50 m (one estimate per species)</span>
+        <span class="klam">Keel et al.: 14 m and 50 m (one estimate per species)</span>
       </div>
 
       <div class="card">
@@ -122,7 +128,7 @@
         <div class="ctrl"><label>Samples you can afford <span class="v" id="vN"></span>
           <span class="tip" tabindex="0">i<span class="tt">Number of 1-L water samples collected on the cross section on one visit. The tool returns the CV of the estimated mean that this many samples achieve.</span></span></label>
           <input type="range" id="n_given" min="1" max="100" step="1" value="9"></div>
-        <span class="klam">Klamath: 28&ndash;35 per section, median 33</span>
+        <span class="klam">Keel et al.: 28&ndash;35 per section, median 33</span>
         <div class="check" id="checkBox"></div>
       </div>
     </div>
@@ -156,18 +162,18 @@
       <details><summary>How the numbers are calculated</summary>
         <p><b>Simple random.</b> CV(n) = site CV &divide; &radic;n, so n = (site CV &divide; target CV)&sup2; (Cochran 1977).</p>
         <p><b>Spatially stratified.</b> Concentration across the width is modelled as a share <i>p</i> of spatially correlated variation (Mat&eacute;rn correlation, &nu; = 1, with the chosen range) plus a share 1 &minus; <i>p</i> of independent noise. The CV of the mean of n samples at the centres of n equal strips is site CV &times; &radic;[(<i>p</i> A(n) + (1 &minus; <i>p</i>)/n) &divide; (1 &minus; <i>p</i> c&#772;)], where A(n) is the variance of the difference between the sample mean and the true section mean of the correlated part, and c&#772; is the mean correlation between two random positions on the section. The tool reports the smallest n that meets the target.</p>
-        <p><b>Simulation.</b> A log-normal field with the chosen site CV, patchiness, and patch size in a stylised channel 3 m deep. It is an illustration; no calculation depends on it.</p>
+        <p><b>Simulation.</b> A log-normal field with the chosen site CV, patchiness, and patch size in a randomly drawn channel up to 3 m deep. It is an illustration; the sample numbers do not depend on the bed shape or on the simulation.</p>
       </details>
       <details><summary>What this tool does not cover</summary>
         <ul>
           <li>It concerns the mean of one cross section on one visit, not day-to-day change and not how well one section represents a longer reach.</li>
           <li>The site CV from a small pilot is itself uncertain, and the samples needed scale with its square. Round up.</li>
-          <li>Patterns with depth are not modelled. In the Klamath study Chinook salmon eDNA declined with depth, so sample both surface and depth.</li>
+          <li>Patterns with depth are not modelled. In Keel et al. Chinook salmon eDNA declined with depth, so sample both surface and depth.</li>
           <li>Detection limits and the volume filtered per sample are outside its scope.</li>
         </ul>
       </details>
-      <details><summary>Where the Klamath values come from</summary>
-        <p>Six cross sections of the Klamath River, California, sampled in April 2021 with 28 to 35 one-liter samples each, for <i>Ceratonova shasta</i> and Chinook salmon (<i>Oncorhynchus tshawytscha</i>) eDNA. Site CV and width are the range and median across sites and species; patchiness and patch size are one estimate per species from spatial models.</p>
+      <details><summary>Where the Keel et al. values come from</summary>
+        <p>The green tags give the values measured in one study, Keel et al. (in prep.): six cross sections of the Klamath River, California, sampled during one week in April 2021 with 28 to 35 one-liter samples each, for <i>Ceratonova shasta</i> and Chinook salmon (<i>Oncorhynchus tshawytscha</i>) eDNA. Site CV and width are the range and median across sites and species; patchiness and patch size are one estimate per species from spatial models. They describe those sections on those days, not the Klamath River in general, and are offered as a reference point, not as defaults for other sites.</p>
         <p>Keel, D. J., N. A. Som, M. J. Henderson, and A. P. Kinziger. In prep. <i>Spatial variability in environmental DNA concentrations on river cross sections: implications for sampling design and abundance estimation.</i></p>
       </details>
     </div>
@@ -214,9 +220,16 @@
   function gaussKernel(sigma) { if (sigma < 0.4) return [1]; const r = Math.ceil(3 * sigma), k = []; let sum = 0; for (let i = -r; i <= r; i++) { const v = Math.exp(-0.5 * (i / sigma) ** 2); k.push(v); sum += v; } return k.map(v => v / sum); }
   function conv1D(arr, k) { const n = arr.length, r = (k.length - 1) >> 1, out = new Array(n); for (let i = 0; i < n; i++) { let s = 0; for (let j = 0; j < k.length; j++) s += arr[Math.max(0, Math.min(n - 1, i - r + j))] * k[j]; out[i] = s; } return out; }
   function blur2D(flat, nX, nY, sX, sY) { const kX = gaussKernel(sX), kY = gaussKernel(sY), tmp = new Array(nX * nY); for (let yi = 0; yi < nY; yi++) { const b = conv1D(flat.slice(yi * nX, (yi + 1) * nX), kX); for (let xi = 0; xi < nX; xi++) tmp[yi * nX + xi] = b[xi]; } const out = new Array(nX * nY); for (let xi = 0; xi < nX; xi++) { const col = []; for (let yi = 0; yi < nY; yi++) col.push(tmp[yi * nX + xi]); const b = conv1D(col, kY); for (let yi = 0; yi < nY; yi++) out[yi * nX + xi] = b[yi]; } return out; }
+  // irregular channel bed: an off-centre thalweg with bars and pools, zero depth at both banks; u = x / width
+  function bedProfile(seed, maxDepth) {
+    const r = mulberry32(seed + 7), skew = 0.6 + r() * 1.0, a1 = 0.15 + r() * 0.2, k1 = 1 + Math.floor(r() * 2), f1 = r() * 6.283, a2 = 0.08 + r() * 0.1, k2 = 3 + Math.floor(r() * 3), f2 = r() * 6.283;
+    const raw = u => Math.sin(Math.PI * Math.pow(u, skew)) * Math.max(0.25, 1 + a1 * Math.sin(6.283 * k1 * u + f1) + a2 * Math.sin(6.283 * k2 * u + f2));
+    let top = 0; for (let i = 0; i <= 200; i++) top = Math.max(top, raw(i / 200));
+    return u => maxDepth * Math.max(0, raw(Math.min(1, Math.max(0, u)))) / top;
+  }
   function simulateField(width, maxDepth, nX, nY, cvSite, p, rangeM) {
     const rng = mulberry32(SIM_SEED), xg = linspace(0, width, nX), yg = linspace(0, maxDepth, nY);
-    const depthMax = xg.map(x => maxDepth * 4 * (x / width) * (1 - x / width));
+    const bed = bedProfile(SIM_SEED, maxDepth), depthMax = xg.map(x => bed(x / width));
     const sig2 = Math.log(1 + cvSite * cvSite), mu = -sig2 / 2, sigU = Math.sqrt(p * sig2), sigE = Math.sqrt(Math.max((1 - p) * sig2, 1e-8));
     const nPts = nX * nY, raw = []; for (let i = 0; i < nPts; i++) raw.push(randNorm(rng));
     const xSp = width / (nX - 1), ySp = maxDepth / (nY - 1);
@@ -280,7 +293,7 @@
     const flat = f.z.flat().filter(v => v !== null).sort((a, b) => a - b), zMax = Math.max(2, flat[Math.floor(flat.length * 0.98)]);
     const heat = { type: 'heatmap', x: f.xg, y: f.yg.map(v => -v), z: f.z, zmin: 0, zmax: zMax, colorscale: [[0, '#eef5fb'], [0.3, '#9ecae1'], [0.6, '#3182bd'], [1, '#08306b']], zsmooth: 'best', hoverinfo: 'skip',
       colorbar: { title: { text: '&times; section mean', side: 'right' }, thickness: 13, len: 0.9, ticksuffix: '×' } };
-    const xo = linspace(0, p.widthM, 200), outline = { type: 'scatter', mode: 'lines', x: xo, y: xo.map(x => -maxDepth * 4 * (x / p.widthM) * (1 - x / p.widthM)), line: { color: '#222', width: 2 }, hoverinfo: 'skip', showlegend: false };
+    const xo = linspace(0, p.widthM, 200), outline = { type: 'scatter', mode: 'lines', x: xo, y: xo.map(x => -bedProfile(SIM_SEED, maxDepth)(x / p.widthM)), line: { color: '#222', width: 2 }, hoverinfo: 'skip', showlegend: false };
     const layout = { height: 230, margin: { l: 52, r: 70, t: 6, b: 42 }, xaxis: { title: 'Distance from left bank (m)', range: [0, p.widthM], zeroline: false }, yaxis: { title: 'Depth (m)', range: [-maxDepth * 1.08, 0.05], tickvals: [0, -1, -2, -3], ticktext: ['0', '1', '2', '3'], zeroline: false }, plot_bgcolor: 'white', paper_bgcolor: 'white' };
     Plotly.react('crossSection', [heat, outline], layout, { responsive: true, displayModeBar: false });
   }
@@ -337,7 +350,11 @@
     const nn = renderAnswer(p, T); renderCurve(p, T, nn);
     if (full !== false) { renderCS(p); renderMap('mapRandom', p, T, 'random', 'Simple random (width has no effect)'); renderMap('mapStrat', p, T, 'stratified', `Spatially stratified, patchiness ${p.p.toFixed(2)}, patch size ${p.rangeM} m`); }
   }
-  ['cv_target', 'cv_site', 'width_m', 'p', 'range_m'].forEach(id => $(id).addEventListener('input', () => update()));
+  ['cv_target', 'width_m', 'p', 'range_m'].forEach(id => $(id).addEventListener('input', () => update()));
+  // step 2: the site CV and the pilot mean and SD keep each other in step
+  const sig = v => +(+v).toPrecision(4);
+  $('cv_site').addEventListener('input', () => { const m = +$('pilot_mean').value; if (m > 0) $('pilot_sd').value = sig(m * +$('cv_site').value); update(); });
+  ['pilot_mean', 'pilot_sd'].forEach(id => $(id).addEventListener('input', () => { const m = +$('pilot_mean').value, sd = +$('pilot_sd').value; if (m > 0 && sd > 0) { $('cv_site').value = Math.min(2, Math.max(0.1, sd / m)); update(); } }));
   $('n_given').addEventListener('input', () => update(false));
   document.querySelectorAll('input[name="strategy"]').forEach(el => el.addEventListener('change', () => update(false)));
   document.querySelectorAll('#chips .chip').forEach(c => c.addEventListener('click', () => { $('cv_target').value = c.dataset.cv; update(); }));

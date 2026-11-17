@@ -9,11 +9,19 @@ source("Sampling_Design_Functions.R", local = TRUE)
 
 N_MAX <- 500
 
+## irregular channel bed: an off-centre thalweg with bars and pools, zero depth at both banks; u = x / width
+bed_profile <- function(seed, max_depth = 3) {
+  set.seed(seed + 7)
+  skew <- runif(1, 0.6, 1.6); a <- c(runif(1, 0.15, 0.35), runif(1, 0.08, 0.18)); k <- c(sample(1:2, 1), sample(3:5, 1)); f <- runif(2, 0, 2 * pi)
+  raw <- function(u) sin(pi * u^skew) * pmax(0.25, 1 + a[1] * sin(2 * pi * k[1] * u + f[1]) + a[2] * sin(2 * pi * k[2] * u + f[2]))
+  top <- max(raw(seq(0, 1, length.out = 201)))
+  function(u) max_depth * pmax(0, raw(pmin(1, pmax(0, u)))) / top
+}
 ## a correlated log-normal field in a stylised channel, relative to the section mean (for the picture)
 matern_field <- function(width, max_depth = 3, n_x = 40, n_y = 14, cv_site, p, range_m, seed = 42) {
-  set.seed(seed)
   grid <- expand.grid(x = seq(0, width, length.out = n_x), y = seq(0, max_depth, length.out = n_y))
-  grid$in_channel <- grid$y <= max_depth * 4 * (grid$x / width) * (1 - grid$x / width)
+  grid$in_channel <- grid$y <= bed_profile(seed, max_depth)(grid$x / width)
+  set.seed(seed)
   sig2  <- log(1 + cv_site^2)
   D     <- as.matrix(dist(grid[, c("x", "y")]))
   Sigma <- p * sig2 * matern_cor(D, sqrt(8) / range_m) + diag((1 - p) * sig2 + 1e-6, nrow(grid))
@@ -44,6 +52,8 @@ ui <- fluidPage(
     .lay { font-size: 12.5px; color: #444; line-height: 1.4; margin: 2px 0 6px 0; }
     .klam { font-size: 11.5px; color: #1e6b52; background: #eaf6f1; border-radius: 10px; padding: 1px 8px; display: inline-block; margin-bottom: 8px; }
     .v { color: #1a5276; } .form-group { margin-bottom: 2px; } .irs--shiny .irs-min, .irs--shiny .irs-max, .irs--shiny .irs-single { display: none; }
+    .pilot { display: flex; align-items: flex-end; gap: 8px; flex-wrap: wrap; font-size: 12.5px; color: #444; margin: 0 0 6px 0; }
+    .pilot label { font-weight: normal; font-size: 12.5px; margin-bottom: 0; } .pilot .form-control { height: 28px; padding: 2px 6px; font-size: 12.5px; }
     .chip { border: 1px solid #2980b9; background: white; color: #1a5276; border-radius: 16px; padding: 4px 11px; font-size: 12.5px; margin: 0 4px 6px 0; }
     .tip { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; border-radius: 50%; background: #d5e8f3; color: #1a5276; font-size: 10.5px; font-weight: bold; cursor: help; margin-left: 4px; }
     .tip .tt { display: none; position: absolute; left: 20px; top: -6px; z-index: 20; width: 280px; background: #1f2d3a; color: white; font-weight: normal; font-size: 12px; line-height: 1.45; border-radius: 5px; padding: 8px 10px; text-align: left; }
@@ -65,19 +75,22 @@ ui <- fluidPage(
         actionButton("cv01", HTML("0.1 &nbsp;Research"), class = "chip"), actionButton("cv02", HTML("0.2 &nbsp;Management"), class = "chip"),
         actionButton("cv03", HTML("0.3 &nbsp;Pilot study"), class = "chip"),
         slider("cv_target", tip("Target CV", "v_cvt", "Target CV = standard error of the estimated cross-section mean &divide; the mean. It is a precision criterion, not statistical power. A 95% interval is roughly the mean &plusmn; 2 &times; target CV."), 0.05, 0.60, 0.20, 0.01),
-        uiOutput("lay_target"), klam("Klamath 2021 reached 0.07&ndash;0.25, median 0.10")),
+        uiOutput("lay_target"), klam("Keel et al. reached 0.07&ndash;0.25, median 0.10")),
       step(2, "How variable is your site?",
         slider("cv_site", tip("Site CV", "v_cvs", "Site CV = standard deviation &divide; mean of eDNA concentration among single 1-L samples taken across the cross section. It includes field heterogeneity and laboratory measurement error."), 0.10, 2.00, 0.55, 0.01),
-        lay("How much single samples differ from one another. Take it from a pilot study: SD &divide; mean of your samples. <b>Doubling it quadruples the samples needed.</b>"),
-        klam("Klamath: 0.40&ndash;1.43, median 0.55")),
+        div(class = "pilot", span(style = "width:100%", "or from a pilot study:"),
+            div(numericInput("pilot_mean", "mean", value = 1000, min = 0, width = "95px")), div(numericInput("pilot_sd", "SD", value = 550, min = 0, width = "95px")),
+            HTML('<span class="tip" tabindex="0">i<span class="tt">Enter the mean and standard deviation of concentration among your pilot samples (any units, for example copies per liter). Site CV = SD &divide; mean. Changing the site CV updates the SD for the same mean.</span></span>')),
+        lay("How much single samples differ from one another: SD &divide; mean of your pilot samples. <b>Doubling it quadruples the samples needed.</b>"),
+        klam("Keel et al.: 0.40&ndash;1.43, median 0.55")),
       step(3, "Describe the cross section",
         lay("These three only matter for evenly spaced samples. <b>No pilot data on patchiness? Skip this step</b> and use the simple random answer, which is a safe upper bound."),
         slider("width_m", tip("Width (m)", "v_w", "Wetted width of the cross section. Evenly spaced samples on a wider section are farther apart relative to the patch size, so they are less correlated."), 5, 150, 38, 1),
-        lay("Wider than the patches &rarr; evenly spaced samples are less alike &rarr; <b>fewer needed</b>."), klam("Klamath: 34&ndash;45 m, median 38 m"),
+        lay("Wider than the patches &rarr; evenly spaced samples are less alike &rarr; <b>fewer needed</b>."), klam("Keel et al.: 34&ndash;45 m, median 38 m"),
         slider("p", tip("Patchiness", "v_p", "Spatial proportion of variance, p = 1 &minus; nugget &divide; sill of a semivariogram of pilot samples: the share of the variance among samples that is spatially structured rather than random noise."), 0, 0.95, 0.50, 0.01),
-        lay("Share of the variation that comes in patches (neighbouring samples alike) rather than random noise. <b>More patchy &rarr; bigger saving from even spacing.</b>"), klam("Klamath: 0.33 and 0.60 (one estimate per species)"),
+        lay("Share of the variation that comes in patches (neighbouring samples alike) rather than random noise. <b>More patchy &rarr; bigger saving from even spacing.</b>"), klam("Keel et al.: 0.33 and 0.60 (one estimate per species)"),
         slider("range_m", tip("Patch size (m)", "v_r", "Correlation range of a Mat&eacute;rn (&nu; = 1) spatial model: the distance at which the correlation between two samples falls to about 0.14. Read it from a semivariogram of pilot samples."), 1, 100, 30, 1),
-        lay("Distance over which samples stay alike. Even spacing <b>saves most when patches are about as large as the section</b>, least when they are tiny or far larger."), klam("Klamath: 14 m and 50 m (one estimate per species)")),
+        lay("Distance over which samples stay alike. Even spacing <b>saves most when patches are about as large as the section</b>, least when they are tiny or far larger."), klam("Keel et al.: 14 m and 50 m (one estimate per species)")),
       step(4, "How will you place the samples?",
         radioButtons("strategy", NULL, selected = "stratified", choiceValues = c("random", "stratified"), choiceNames = list(
           HTML("<b>Simple random</b><br>Sample points picked at random across the width, or samples you cannot space evenly. Needs no knowledge of patchiness."),
@@ -85,7 +98,7 @@ ui <- fluidPage(
         uiOutput("n_both")),
       step(5, "Check a sample number",
         slider("n_given", tip("Samples you can afford", "v_n", "Number of 1-L water samples collected on the cross section on one visit. The tool returns the CV of the estimated mean that this many samples achieve."), 1, 100, 9, 1),
-        klam("Klamath: 28&ndash;35 per section, median 33"), uiOutput("check"))
+        klam("Keel et al.: 28&ndash;35 per section, median 33"), uiOutput("check"))
     ),
     column(8,
       uiOutput("answer"),
@@ -101,14 +114,14 @@ ui <- fluidPage(
       tags$details(tags$summary("How the numbers are calculated"),
         tags$p(HTML("<b>Simple random.</b> CV(n) = site CV &divide; &radic;n, so n = (site CV &divide; target CV)&sup2; (Cochran 1977).")),
         tags$p(HTML("<b>Spatially stratified.</b> Concentration across the width is modelled as a share <i>p</i> of spatially correlated variation (Mat&eacute;rn correlation, &nu; = 1, with the chosen range) plus a share 1 &minus; <i>p</i> of independent noise. The CV of the mean of n samples at the centres of n equal strips is site CV &times; &radic;[(<i>p</i> A(n) + (1 &minus; <i>p</i>)/n) &divide; (1 &minus; <i>p</i> c&#772;)], where A(n) is the variance of the difference between the sample mean and the true section mean of the correlated part, and c&#772; is the mean correlation between two random positions on the section. The tool reports the smallest n that meets the target.")),
-        tags$p(HTML("<b>Simulation.</b> A log-normal field with the chosen site CV, patchiness, and patch size in a stylised channel 3 m deep. It is an illustration; no calculation depends on it."))),
+        tags$p(HTML("<b>Simulation.</b> A log-normal field with the chosen site CV, patchiness, and patch size in a randomly drawn channel up to 3 m deep. It is an illustration; the sample numbers do not depend on the bed shape or on the simulation."))),
       tags$details(tags$summary("What this tool does not cover"), tags$ul(
         tags$li("It concerns the mean of one cross section on one visit, not day-to-day change and not how well one section represents a longer reach."),
         tags$li("The site CV from a small pilot is itself uncertain, and the samples needed scale with its square. Round up."),
-        tags$li("Patterns with depth are not modelled. In the Klamath study Chinook salmon eDNA declined with depth, so sample both surface and depth."),
+        tags$li("Patterns with depth are not modelled. In Keel et al. Chinook salmon eDNA declined with depth, so sample both surface and depth."),
         tags$li("Detection limits and the volume filtered per sample are outside its scope."))),
-      tags$details(tags$summary("Where the Klamath values come from"),
-        tags$p(HTML("Six cross sections of the Klamath River, California, sampled in April 2021 with 28 to 35 one-liter samples each, for <i>Ceratonova shasta</i> and Chinook salmon (<i>Oncorhynchus tshawytscha</i>) eDNA. Site CV and width are the range and median across sites and species; patchiness and patch size are one estimate per species from spatial models.")),
+      tags$details(tags$summary("Where the Keel et al. values come from"),
+        tags$p(HTML("The green tags give the values measured in one study, Keel et al. (in prep.): six cross sections of the Klamath River, California, sampled during one week in April 2021 with 28 to 35 one-liter samples each, for <i>Ceratonova shasta</i> and Chinook salmon (<i>Oncorhynchus tshawytscha</i>) eDNA. Site CV and width are the range and median across sites and species; patchiness and patch size are one estimate per species from spatial models. They describe those sections on those days, not the Klamath River in general, and are offered as a reference point, not as defaults for other sites.")),
         tags$p(HTML("Keel, D. J., N. A. Som, M. J. Henderson, and A. P. Kinziger. In prep. <i>Spatial variability in environmental DNA concentrations on river cross sections: implications for sampling design and abundance estimation.</i>")))
     )
   )
@@ -124,6 +137,13 @@ server <- function(input, output, session) {
   output$v_cvt <- renderText(sprintf("%.2f", input$cv_target)); output$v_cvs <- renderText(sprintf("%.2f", input$cv_site))
   output$v_w <- renderText(input$width_m); output$v_p <- renderText(sprintf("%.2f", input$p))
   output$v_r <- renderText(input$range_m); output$v_n <- renderText(input$n_given)
+
+  ## step 2: the site CV and the pilot mean and SD keep each other in step
+  observeEvent(input$cv_site, { m <- input$pilot_mean
+    if (isTruthy(m) && m > 0 && (!isTruthy(input$pilot_sd) || abs(input$pilot_sd / m - input$cv_site) > 0.006)) updateNumericInput(session, "pilot_sd", value = signif(m * input$cv_site, 4)) }, ignoreInit = TRUE)
+  observeEvent(c(input$pilot_mean, input$pilot_sd), { m <- input$pilot_mean; s <- input$pilot_sd
+    if (isTruthy(m) && isTruthy(s) && m > 0 && s > 0) { cv <- min(2, max(0.1, round(s / m, 2)))
+      if (abs(cv - input$cv_site) > 0.006) updateSliderInput(session, "cv_site", value = cv) } }, ignoreInit = TRUE)
 
   n_rand  <- reactive(ceiling((input$cv_site / input$cv_target)^2 - 1e-9))
   n_strat <- reactive(n_stratified(input$cv_site, input$cv_target, input$width_m, input$p, tab(), n_max = N_MAX))
@@ -178,7 +198,7 @@ server <- function(input, output, session) {
   output$cross_section <- renderPlot({
     W <- input$width_m
     gd <- matern_field(W, cv_site = input$cv_site, p = input$p, range_m = input$range_m, seed = sim_seed())
-    outline <- data.frame(x = seq(0, W, length.out = 300)); outline$y <- -3 * 4 * (outline$x / W) * (1 - outline$x / W)
+    outline <- data.frame(x = seq(0, W, length.out = 300)); outline$y <- -bed_profile(sim_seed())(outline$x / W)
     top <- max(2, quantile(gd$rel, 0.98, na.rm = TRUE))
     ggplot(gd[!is.na(gd$rel), ], aes(x = x, y = -y, fill = rel)) +
       geom_tile() +
