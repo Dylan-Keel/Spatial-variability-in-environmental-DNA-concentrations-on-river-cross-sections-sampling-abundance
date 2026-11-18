@@ -716,10 +716,10 @@ curves5 <- site.stats %>% rowwise() %>% do({
 }) %>% ungroup() %>%
   mutate(species = factor(species, levels = names(COL_SPECIES)), Site = factor(Site, levels = 1:6),
          design = factor(design, levels = c("Simple random", "Spatially stratified")))
-ref.lines <- data.frame(CV = c(0.1, 0.2, 0.3), label = paste("Target CV =", c(0.1, 0.2, 0.3)))
+ref.lines <- data.frame(CV = c(0.1, 0.2, 0.3), label = sprintf("CV[target] == '%.1f'", c(0.1, 0.2, 0.3)))
 fig5 <- ggplot(curves5, aes(x = n, y = CV, colour = Site, linetype = design)) +
   geom_hline(data = ref.lines, aes(yintercept = CV), colour = "grey50", linetype = "dashed", linewidth = 0.5) +
-  geom_text(data = ref.lines, aes(x = 60, y = CV + 0.025, label = label), inherit.aes = FALSE, hjust = 1, size = 3, colour = "grey30") +
+  geom_text(data = ref.lines, aes(x = 60, y = CV + 0.025, label = label), inherit.aes = FALSE, hjust = 1, size = 3, colour = "grey30", parse = TRUE) +
   geom_line(linewidth = 0.8) +
   facet_wrap(~species, ncol = 1, scales = "free_y", labeller = sp_lab) +
   scale_colour_manual(values = COL_SITES, name = "Site") +
@@ -790,7 +790,7 @@ panel7 <- function(cv_t, k, letter) {
 }
 row7 <- function(cv_t, letters, use) annotate_figure(
   ggarrange(panel7(cv_t, 1, letters[1]), panel7(cv_t, 2, letters[2]), panel7(cv_t, 3, letters[3]), ncol = 3),
-  left = text_grob(sprintf("Target CV %.1f (%s)", cv_t, use), rot = 90, face = "bold", size = 10))
+  left = text_grob(bquote(bold(CV[target] ~ .(sprintf("= %.1f (%s)", cv_t, use)))), rot = 90, size = 10))
 fig7 <- ggarrange(row7(0.1, c("A", "B", "C"), "research"), row7(0.2, c("D", "E", "F"), "management"), ncol = 1)
 save_fig(fig7, "Figure_7", w = FIG_W2, h = 5.6)
 

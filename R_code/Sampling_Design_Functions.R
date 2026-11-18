@@ -123,7 +123,7 @@ contour_panel <- function(grid, title, br = n_breaks_default, mark = NULL,
   na_part <- grid[is.na(grid$n), ]
   ## an off-canvas tile for every band so each one gets a legend key
   keys <- data.frame(x = min(grid$x) - 1e3, y = min(grid$y) - 1e3, band = factor(labs_b, levels = labs_b))
-  lab_cv <- expression(bold("Site CV  (" * sigma / mu * ")")); lab_w <- "Cross-section width (m)"
+  lab_cv <- expression(bold(CV[site])); lab_w <- "Cross-section width (m)"
   g <- ggplot(grid, aes(x = x, y = y)) +
     geom_tile(data = keys, aes(fill = band), key_glyph = "rect") +
     geom_raster(data = grid[!is.na(grid$n), ], aes(fill = band)) +
