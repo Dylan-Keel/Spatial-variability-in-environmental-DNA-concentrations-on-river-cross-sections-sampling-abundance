@@ -514,6 +514,23 @@ species.par <- list("C. shasta"      = list(p = spatial.proportion.cs, range_m =
                     "O. tshawytscha" = list(p = spatial.proportion.ot, range_m = range.ot.m))
 matern.tab <- lapply(species.par, function(s) matern_tables(s$range_m))
 
+## Samples needed under spatially stratified placement, for the same sites and
+## target CVs as under random placement (Table S1)
+## The wetted width is taken as the distance to the last vertical plus 1 m,
+## as in Figures 5 and 7.
+n.required <- n.required %>% left_join(site.summary %>% transmute(Site, W = width.m + 1), by = "Site") %>% rowwise() %>%
+  mutate(n.strat.cs = n_stratified(cv.cs, CV, W, species.par[["C. shasta"]]$p, matern.tab[["C. shasta"]]),
+         n.strat.ot = n_stratified(cv.ot, CV, W, species.par[["O. tshawytscha"]]$p, matern.tab[["O. tshawytscha"]])) %>%
+  ungroup()
+n.required %>% filter(CV == 0.2) %>% summarise(across(c(n.strat.cs, n.strat.ot), list(min = min, max = max, mean = mean)))
+
+## Cross-section characteristics: sampling date, discharge, wetted width, and
+## number of samples (Table S5)
+site.characteristics <- read.csv("../data/CSD.csv") %>% group_by(Site = SiteN) %>%
+  summarise(date = format(as.Date(first(JulDay) - 1, origin = "2021-01-01")), discharge.m3s = round(first(Q.L.s) / 1000, 1), .groups = "drop") %>%
+  left_join(site.summary %>% transmute(Site, width.m = round(width.m + 1), n.samples = n), by = "Site")
+site.characteristics
+
 #### 5. results tables ####
 
 ## Molecular results reported in the text: field blanks and the proportion of
@@ -541,6 +558,7 @@ write.csv(table1, "../results/Table_1_model_selection.csv", row.names = FALSE)
 write.csv(site.summary, "../results/site_summary.csv", row.names = FALSE)
 write.csv(molecular.summary, "../results/molecular_summary.csv", row.names = FALSE)
 write.csv(n.required, "../results/sample_size_by_site_and_CV.csv", row.names = FALSE)
+write.csv(site.characteristics, "../results/site_characteristics.csv", row.names = FALSE)
 
 ## Moran's I of the Pearson residuals, before and after the spatial random
 ## field, among samples on the same cross section. Weights: inverse distance,
@@ -803,9 +821,9 @@ supp <- "../figures/supporting_information"
 ## Figures S1-S7: model assessment for C. shasta
 save_fig(plot(dc.pois.cs) + theme_ms(), "Figure_S1", w = FIG_W15, h = 4, dir = supp)
 save_fig(plot(dc.nbn.cs) + theme_ms(),  "Figure_S2", w = FIG_W15, h = 4, dir = supp)
-semivariogram <- function(V, ylim, nugget = NULL, sill = NULL, range = NULL) {
+semivariogram <- function(V, ylim, nugget = NULL, sill = NULL, range = NULL, colour = COL_CS) {
   g <- ggplot(V, aes(x = dist, y = gamma)) + geom_point() +
-    geom_smooth(span = 0.9, se = FALSE, colour = COL_CS, linewidth = 0.8, method = "loess", formula = y ~ x) +
+    geom_smooth(span = 0.9, se = FALSE, colour = colour, linewidth = 0.8, method = "loess", formula = y ~ x) +
     coord_cartesian(ylim = ylim) + labs(x = "Distance (km)", y = "Semivariance") + theme_ms()
   if (!is.null(nugget)) g <- g +
     geom_hline(yintercept = nugget, colour = "red") + annotate("text", x = 0.04, y = nugget * 0.95, label = "Nugget", colour = "red") +
@@ -825,15 +843,47 @@ save_fig(semivariogram(as.data.frame(V.full.cs), c(0, 12500)), "Figure_S5", w = 
 save_fig(ggplot_inla_residuals2(Cs.inla.null, y.cs, CI = TRUE, method = NA) + theme_ms() + theme(plot.margin = margin(5.5, 16, 5.5, 5.5)), "Figure_S6", w = FIG_W15, h = 4.5, dir = supp)
 save_fig(plot(ds.null.cs) + theme_ms(), "Figure_S7", w = FIG_W15, h = 4.5, dir = supp)
 
-## Figures S8-S11: posterior densities of range and kappa for the selected models
+## Figures S8-S14: the same assessment for O. tshawytscha. The semivariogram
+## of the non-spatial model (Figure S10) gives the spatial proportion of the
+## residual variance used in the sampling design calculations.
+save_fig(plot(dc.pois.ot) + theme_ms(), "Figure_S8", w = FIG_W15, h = 4, dir = supp)
+save_fig(plot(dc.nbn.ot) + theme_ms(),  "Figure_S9", w = FIG_W15, h = 4, dir = supp)
+save_fig(semivariogram(as.data.frame(V.nbn.ot), c(0, 220), nugget.ot, sill.ot, range.ot, colour = COL_OT), "Figure_S10", w = FIG_W15, h = 4.5, dir = supp)
+save_fig(bubble(resid.nbn.ot, utm$Xkm / 50, utm$Ykm), "Figure_S11", w = FIG_W2, h = 4, dir = supp)
+save_fig(semivariogram(as.data.frame(V.full.ot), c(0, 220), colour = COL_OT), "Figure_S12", w = FIG_W15, h = 4.5, dir = supp)
+save_fig(ggplot_inla_residuals2(Chin.inla.d, y.ot, CI = TRUE, method = NA) + theme_ms() + theme(plot.margin = margin(5.5, 16, 5.5, 5.5)), "Figure_S13", w = FIG_W15, h = 4.5, dir = supp)
+save_fig(plot(ds.d.ot) + theme_ms(), "Figure_S14", w = FIG_W15, h = 4.5, dir = supp)
+
+## Figure S15: the meshes of the spatial random fields at cross section one,
+## on the straightened-river grid of the models (downstream distance against
+## distance from the left bank). The downstream axis of the C. shasta mesh is
+## divided by 50, as in the model.
+mesh.plot <- function(mesh, loc, title, xlab) {
+  tv <- mesh$graph$tv; xy <- mesh$loc[, 1:2]
+  ed <- unique(t(apply(rbind(tv[, 1:2], tv[, 2:3], tv[, c(3, 1)]), 1, sort)))
+  seg <- data.frame(x = xy[ed[, 1], 1], y = xy[ed[, 1], 2], xend = xy[ed[, 2], 1], yend = xy[ed[, 2], 2])
+  s1 <- loc[CSD2$Site == 1, , drop = FALSE]; pad <- 0.6 * max(diff(range(s1[, 1])), diff(range(s1[, 2])))
+  ggplot() + geom_segment(data = seg, aes(x = x, y = y, xend = xend, yend = yend), colour = "grey45", linewidth = 0.2) +
+    geom_point(data = data.frame(x = loc[, 1], y = loc[, 2]), aes(x = x, y = y), colour = "red", shape = 1, size = 1.4) +
+    coord_fixed(xlim = range(s1[, 1]) + c(-pad, pad), ylim = range(s1[, 2]) + c(-pad, pad)) +
+    scale_x_continuous(breaks = scales::breaks_pretty(3)) + scale_y_continuous(breaks = scales::breaks_pretty(3)) +
+    labs(x = xlab, y = "Distance from left bank (grid km)", subtitle = title) + theme_ms(10)
+}
+c(mesh.nodes.cs = mesh.cs$n, mesh.nodes.ot = mesh.ot$n, max.edge.cs.m = MaxEdge.cs * 0.01 * 1000, max.edge.ot.m = MaxEdge.ot * 0.01 * 1000,
+  cutoff.cs.m = MaxEdge.cs * 1000, cutoff.ot.m = MaxEdge.ot * 1000)
+figmesh <- ggarrange(mesh.plot(mesh.cs, Loc.cs, expression(bold("A) ") * bolditalic("C. shasta")), "Downstream distance / 50 (grid km)"),
+                     mesh.plot(mesh.ot, Loc.ot, expression(bold("B) ") * bolditalic("O. tshawytscha")), "Downstream distance (grid km)"), ncol = 2)
+save_fig(figmesh, "Figure_S15", w = FIG_W2, h = 3.8, dir = supp)
+
+## Figures S16-S19: posterior densities of range and kappa for the selected models
 posterior.plot <- function(marg, xlab) ggplot(as.data.frame(marg), aes(x = x, y = y)) + geom_line(linewidth = 0.8) +
   labs(x = xlab, y = "Posterior density") + theme_ms()
-save_fig(posterior.plot(SpatField.cs$marginals.range.nominal[[1]], "Nominal range (km)"), "Figure_S8", w = FIG_W1 * 1.3, h = 3.5, dir = supp)
-save_fig(posterior.plot(SpatField.cs$marginals.kappa[[1]], expression(kappa)), "Figure_S9", w = FIG_W1 * 1.3, h = 3.5, dir = supp)
-save_fig(posterior.plot(SpatField.ot$marginals.range.nominal[[1]], "Nominal range (km)"), "Figure_S10", w = FIG_W1 * 1.3, h = 3.5, dir = supp)
-save_fig(posterior.plot(SpatField.ot$marginals.kappa[[1]], expression(kappa)), "Figure_S11", w = FIG_W1 * 1.3, h = 3.5, dir = supp)
+save_fig(posterior.plot(SpatField.cs$marginals.range.nominal[[1]], "Nominal range (km)"), "Figure_S16", w = FIG_W1 * 1.3, h = 3.5, dir = supp)
+save_fig(posterior.plot(SpatField.cs$marginals.kappa[[1]], expression(kappa)), "Figure_S17", w = FIG_W1 * 1.3, h = 3.5, dir = supp)
+save_fig(posterior.plot(SpatField.ot$marginals.range.nominal[[1]], "Nominal range (km)"), "Figure_S18", w = FIG_W1 * 1.3, h = 3.5, dir = supp)
+save_fig(posterior.plot(SpatField.ot$marginals.kappa[[1]], expression(kappa)), "Figure_S19", w = FIG_W1 * 1.3, h = 3.5, dir = supp)
 
-## Figure S12: difference between paired surface and depth samples of
+## Figure S20: difference between paired surface and depth samples of
 ## O. tshawytscha at each vertical
 bardata <- CSD2 %>% group_by(Distance.Left.Bank.m, Site, Type01) %>% summarise(Chin = mean(Chinook.vol.cor.conc), .groups = "drop_last") %>%
   summarise(diff = Chin[1] - Chin[2], .groups = "drop") %>% drop_na() %>% mutate(Site = factor(Site, levels = 1:6))
@@ -843,9 +893,9 @@ figD1 <- ggplot(bardata, aes(x = Distance.Left.Bank.m, y = diff / 1000)) +
   geom_text(data = pct.surface, aes(x = -Inf, y = Inf, label = label), hjust = -0.1, vjust = 1.5, size = 3) +
   facet_wrap(~Site, ncol = 2, scales = "free", labeller = labeller(Site = function(x) paste("Site", x))) +
   labs(x = "Distance from left bank (m)", y = expression(bold("Surface" ~ "−" ~ "depth (" * 10^3 ~ "copies / L)"))) + theme_ms()
-save_fig(figD1, "Figure_S12", w = FIG_W2, h = 7, dir = supp)
+save_fig(figD1, "Figure_S20", w = FIG_W2, h = 7, dir = supp)
 
-## Figure S13: C. shasta concentration on cross sections 1 and 3 with a tensor
+## Figure S21: C. shasta concentration on cross sections 1 and 3 with a tensor
 ## spline surface (mgcv)
 xs.spline <- function(site.n) {
   d <- subset(CSD2, Site == site.n)
@@ -863,13 +913,13 @@ xs.spline <- function(site.n) {
     labs(x = "Distance from left bank (m)", y = "Depth (m)", subtitle = paste("Site", site.n)) + theme_ms(11)
 }
 figD2 <- ggarrange(xs.spline(1), xs.spline(3), ncol = 1, nrow = 2, common.legend = TRUE, legend = "bottom")
-save_fig(figD2, "Figure_S13", w = FIG_W2, h = 7, dir = supp)
+save_fig(figD2, "Figure_S21", w = FIG_W2, h = 7, dir = supp)
 
 #### 8. save ####
 
 dev.off()
 save(CSD2, utm, site.summary, site.stats, long, scale.par,
-     selection.cs, selection.ot, table1, molecular.summary, n.required,
+     selection.cs, selection.ot, table1, molecular.summary, n.required, site.characteristics,
      fitted.cs, fitted.ot, r2.cs, r2.ot, r2.null.ot, GRSpred,
      Kappa.cs, Range.cs, Sigma_u.cs, cor.cs, matern.at.cs, SpatField.cs,
      Kappa.ot, Range.ot, Sigma_u.ot, cor.ot, matern.at.ot, SpatField.ot,
@@ -878,5 +928,14 @@ save(CSD2, utm, site.summary, site.stats, long, scale.par,
      nugget.cs, sill.cs, range.cs, nugget.ot, sill.ot, range.ot, spatial.proportion.cs, spatial.proportion.ot,
      species.par, model.summaries, spatial.field,
      file = "../results/analysis_cache.rda")
+
+## Fitted models, meshes and stacks, so that figures and tables can be redrawn
+## and the models inspected without refitting. The file is large and is not
+## tracked in git.
+save(nonspat.cs, nonspat.nbn.cs, spat.full.cs, Cs.inla.null,
+     nonspat.ot, nonspat.nbn.ot, spat.full.ot, Chin.inla.d, Chin.inla.t, Chin.inla.null, Chin.inla.top,
+     mesh.cs, mesh.ot, spde.cs, spde.ot, stack.cs, stack.ot, stack2.ot, Loc.cs, Loc.ot,
+     resid.full.cs, resid.null.cs, resid.full.ot, resid.d.ot,
+     file = "../results/model_fits.rda")
 writeLines(capture.output(sessionInfo()), "../results/sessionInfo.txt")
 cat("done\n")

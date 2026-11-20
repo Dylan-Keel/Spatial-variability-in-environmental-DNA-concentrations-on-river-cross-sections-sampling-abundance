@@ -14,3 +14,6 @@ results/*.log
 # OS files
 .DS_Store
 Thumbs.db
+
+# fitted model objects (large; recreated by the main script)
+results/model_fits.rda
