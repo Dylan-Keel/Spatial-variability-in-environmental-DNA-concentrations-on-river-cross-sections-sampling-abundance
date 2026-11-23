@@ -466,6 +466,8 @@ resid.d.ot <- pearson.resid(y.ot, fitted.ot$mean)
 r2.ot      <- pseudo.r2(y.ot, fitted.ot$mean)        # 0.45
 r2.t.ot    <- pseudo.r2(y.ot, fitted.t.ot$mean)
 r2.null.ot <- pseudo.r2(y.ot, fitted.null.ot$mean)   # random effects only
+## Share of the total variance described by the random effects alone (0.38)
+## and added by depth (0.07) or sample type, as differences in pseudo-R2
 c(depth = r2.ot, type = r2.t.ot, null = r2.null.ot,
   depth.explains = r2.ot - r2.null.ot, type.explains = r2.t.ot - r2.null.ot)
 
