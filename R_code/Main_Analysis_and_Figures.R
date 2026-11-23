@@ -337,7 +337,7 @@ kfold.cv <- function(tag, y, mesh, Loc, spde, w.index, Xm) {
     cl <- parallel::makeCluster(N.WORKERS)
     on.exit(parallel::stopCluster(cl), add = TRUE)
     parallel::clusterEvalQ(cl, { suppressPackageStartupMessages(library(INLA)); inla.setOption(num.threads = "1:1"); NULL })
-    parallel::clusterExport(cl, c("one.repeat", "fit.spatial", "pseudo.r2", "candidate.forms", "SEED", "CV.CORRECTED",
+    parallel::clusterExport(cl, c("one.repeat", "fit.spatial", "fit.inla", "pseudo.r2", "candidate.forms", "SEED", "CV.CORRECTED",
                                   "out.dir", "tag", "y", "mesh", "Loc", "spde", "w.index", "Xm"), envir = environment())
     parallel::parLapply(cl, to.run, function(p) {
       assign("spde", spde, envir = globalenv())    # formulas reference the spde object by name
