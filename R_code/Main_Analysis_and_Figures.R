@@ -834,13 +834,15 @@ semivariogram <- function(V, ylim, nugget = NULL, sill = NULL, range = NULL, col
   g
 }
 save_fig(semivariogram(as.data.frame(V.nbn.cs), c(0, 30000), nugget.cs, sill.cs, range.cs), "Figure_S3", w = FIG_W15, h = 4.5, dir = supp)
-bubble <- function(resid, X, Y) {
-  d <- data.frame(resid = resid, X = X, Y = Y, size = 5 * abs(resid) / max(resid), sign = ifelse(resid > 0, "positive", "negative"))
-  ggplot(d, aes(x = X, y = Y, size = size, colour = sign)) + geom_point(shape = 1) +
+bubble <- function(resid) {
+  d <- data.frame(resid = resid, bank = CSD2$Distance.Left.Bank.m, depth = CSD2$D.M., site = paste("Cross section", CSD2$Site),
+                  size = 5 * abs(resid) / max(resid), sign = ifelse(resid > 0, "positive", "negative"))
+  ggplot(d, aes(x = bank, y = depth, size = size, colour = sign)) + geom_point(shape = 1) +
+    facet_wrap(~site, nrow = 2) + scale_y_reverse() +
     scale_colour_manual(values = c(positive = "red", negative = "black"), name = "Residual") + scale_size_identity() +
-    labs(x = "Downstream distance (km / 50)", y = "Distance from left bank (km)") + theme_ms()
+    labs(x = "Distance from left bank (m)", y = "Sample depth (m)") + theme_ms() + theme(legend.position = "bottom")
 }
-save_fig(bubble(resid.nbn.cs, utm$Xkm / 50, utm$Ykm), "Figure_S4", w = FIG_W2, h = 4, dir = supp)
+save_fig(bubble(resid.nbn.cs), "Figure_S4", w = FIG_W2, h = 5, dir = supp)
 save_fig(semivariogram(as.data.frame(V.full.cs), c(0, 12500)), "Figure_S5", w = FIG_W15, h = 4.5, dir = supp)
 save_fig(ggplot_inla_residuals2(Cs.inla.null, y.cs, CI = TRUE, method = NA) + theme_ms() + theme(plot.margin = margin(5.5, 16, 5.5, 5.5)), "Figure_S6", w = FIG_W15, h = 4.5, dir = supp)
 save_fig(plot(ds.null.cs) + theme_ms(), "Figure_S7", w = FIG_W15, h = 4.5, dir = supp)
@@ -851,7 +853,7 @@ save_fig(plot(ds.null.cs) + theme_ms(), "Figure_S7", w = FIG_W15, h = 4.5, dir =
 save_fig(plot(dc.pois.ot) + theme_ms(), "Figure_S8", w = FIG_W15, h = 4, dir = supp)
 save_fig(plot(dc.nbn.ot) + theme_ms(),  "Figure_S9", w = FIG_W15, h = 4, dir = supp)
 save_fig(semivariogram(as.data.frame(V.nbn.ot), c(0, 220), nugget.ot, sill.ot, range.ot, colour = COL_OT), "Figure_S10", w = FIG_W15, h = 4.5, dir = supp)
-save_fig(bubble(resid.nbn.ot, utm$Xkm / 50, utm$Ykm), "Figure_S11", w = FIG_W2, h = 4, dir = supp)
+save_fig(bubble(resid.nbn.ot), "Figure_S11", w = FIG_W2, h = 5, dir = supp)
 save_fig(semivariogram(as.data.frame(V.full.ot), c(0, 220), colour = COL_OT), "Figure_S12", w = FIG_W15, h = 4.5, dir = supp)
 save_fig(ggplot_inla_residuals2(Chin.inla.d, y.ot, CI = TRUE, method = NA) + theme_ms() + theme(plot.margin = margin(5.5, 16, 5.5, 5.5)), "Figure_S13", w = FIG_W15, h = 4.5, dir = supp)
 save_fig(plot(ds.d.ot) + theme_ms(), "Figure_S14", w = FIG_W15, h = 4.5, dir = supp)

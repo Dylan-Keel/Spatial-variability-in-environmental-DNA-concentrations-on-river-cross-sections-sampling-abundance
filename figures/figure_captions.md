@@ -26,7 +26,7 @@ Molecular Ecology publishes the supplement as Supporting Information with figure
 
 **Figure S3 (A3).** Semivariance of the Pearson residuals of the non-spatial negative binomial GLMM for *C. shasta* over distance (km). Sill 24,200, nugget 9,600, and an estimated range of 50 m; 60.3 percent of the residual variance is spatial.
 
-**Figure S4 (A4).** Spatial Pearson residuals of the non-spatial negative binomial GLMM for *C. shasta* plotted in pseudo-space. Red circles are positive residuals, black circles negative, and circle size is proportional to the residual.
+**Figure S4 (A4).** Pearson residuals of the non-spatial negative binomial GLMM for *C. shasta* at the sample positions on each cross section. Red circles are positive residuals, black circles negative, and circle size is proportional to the residual.
 
 **Figure S5 (A5).** Semivariance of the Pearson residuals of the full spatial negative binomial GLMM for *C. shasta*. No sill is evident, so residual spatial autocorrelation is taken to be negligible.
 
@@ -40,7 +40,7 @@ Molecular Ecology publishes the supplement as Supporting Information with figure
 
 **Figure S10.** Semivariance of the Pearson residuals of the non-spatial negative binomial GLMM for *O. tshawytscha* over distance (km). Sill 165, nugget 110, range about 30 m; 33.3 percent of the residual variance is spatially structured.
 
-**Figure S11.** Spatial Pearson residuals of the non-spatial negative binomial GLMM for *O. tshawytscha* in pseudo-space. Symbols as in Figure S4.
+**Figure S11.** Pearson residuals of the non-spatial negative binomial GLMM for *O. tshawytscha* at the sample positions on each cross section. Symbols as in Figure S4.
 
 **Figure S12.** Semivariance of the Pearson residuals of the full spatial negative binomial GLMM for *O. tshawytscha*. The pattern is little changed from Figure S10.
 
