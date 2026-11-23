@@ -113,7 +113,7 @@ ui <- fluidPage(
       slider("p", tip("Patchiness", "v_p", "Spatial proportion of variance, p = 1 &minus; nugget &divide; sill of a semivariogram of pilot samples: the share of the variance among samples that is spatially structured rather than random noise."), 0, 0.95, 0.50, 0.01),
       lay("Share of the variation that comes in patches rather than random noise. <b>Higher patchiness &rarr; fewer 1-L samples.</b>"), klam("Keel et al.: 0.33 Chinook salmon, 0.60 <i>C. shasta</i>"),
       slider("range_m", tip("Patch size (m)", "v_r", "Correlation range of a Mat&eacute;rn (&nu; = 1) spatial model: the distance at which the correlation between two samples falls to about 0.14. Read it from a semivariogram of pilot samples."), 1, 100, 30, 1),
-      lay("Distance over which samples stay alike. <b>Fewest 1-L samples when patches are about a tenth to a fifth of the width; more when they are smaller or larger.</b>"), klam("Keel et al.: 14 m Chinook salmon, 50 m <i>C. shasta</i>"))),
+      lay("Distance over which samples stay alike. <b>Fewest 1-L samples when patches are about a tenth to a fifth of the width; more when they are smaller or larger.</b>"), klam("Keel et al.: 13 m Chinook salmon, 50 m <i>C. shasta</i>"))),
     column(8, div(class = "card", div(class = "panel-title", textOutput("strat_title", inline = TRUE)),
       div(class = "panel-sub", "The same graph for evenly spaced samples, with simple random for comparison."),
       plotOutput("curve_strat", height = "270px")),

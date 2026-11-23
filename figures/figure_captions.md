@@ -10,11 +10,11 @@ Files are named as the journal asks (Figure_1, Figure_2, ...). Each figure is in
 
 **Figure 4.** Environmental DNA concentrations of *C. shasta* (left) and *O. tshawytscha* (right) at the six cross sections. Concentrations are scaled by site and species to a mean of zero and a standard deviation of one. The thick black line is the measured river bottom.
 
-**Figure 5.** Precision of the estimated mean eDNA concentration on each of the six cross sections (CV of the mean) for 1 to 60 one-liter samples, from the observed variability at each site. Solid lines follow *n*_ind = (CV_site / CV_target)² and apply to samples placed at random across the section (independence). Dashed lines (*n*_strat) apply to samples spaced evenly across the section (spatially stratified), using the spatial proportion of variance and correlation range estimated for each species and the measured width of each section. Horizontal lines mark target CVs of the estimated mean of 0.1, 0.2, and 0.3.
+**Figure 5.** Precision of the estimated mean eDNA concentration on each of the six cross sections (CV of the estimated mean) for 1 to 60 one-liter samples, from the observed variability at each site. Solid lines follow *n*_ind = (CV_site / CV_target)² and apply to samples placed at random across the section (independence). Dashed lines (*n*_strat) apply to samples spaced evenly across the section (spatially stratified), using the spatial proportion of variance and correlation range estimated for each species and the measured width of each section. Horizontal lines mark target CVs of the estimated mean of 0.1, 0.2, and 0.3.
 
 **Figure 6.** A) Fitted versus observed *C. shasta* eDNA concentrations (thousands of copies per liter) with a 1:1 line. B) Fitted versus observed *O. tshawytscha* eDNA concentrations (natural log of copies per liter) with a 1:1 line. C) The multiplicative effect of scaled depth (mean of zero, standard deviation of one) on *O. tshawytscha* eDNA concentration. D) The multiplicative effect of scaled distance to shore on *O. tshawytscha* eDNA concentration. Bands in C and D are 95 percent credible intervals from the full spatial model.
 
-**Figure 7.** Number of one-liter samples (*n*) needed to estimate the mean eDNA concentration of a river cross section, as a function of the width of the cross section and the site CV (the coefficient of variation of concentration among samples on the section), for a target CV of the estimated mean of 0.1 (research; A to C) and 0.2 (management; D to F). A, D) Samples placed at random, *n* = (CV_site / CV_target)², for which width has no effect. B, E) Samples spaced evenly across the width (spatially stratified) under the spatial structure estimated for *C. shasta* (60 percent of the variance spatially structured, correlation range 50 m). C, F) The same under the structure estimated for *O. tshawytscha* (33 percent, 14 m). Each colour block is labelled with its range of *n*. Points are the six cross sections of this study (circles, *C. shasta*; triangles, *O. tshawytscha*). An interactive version for other settings is available as the sampling design tool (see Data Accessibility).
+**Figure 7.** Number of one-liter samples (*n*) needed to estimate the mean eDNA concentration of a river cross section, as a function of the width of the cross section and the site CV (the coefficient of variation of concentration among samples on the section), for a target CV of the estimated mean of 0.1 (research; A to C) and 0.2 (management; D to F). A, D) Samples placed at random, *n* = (CV_site / CV_target)², for which width has no effect. B, E) Samples spaced evenly across the width (spatially stratified) under the spatial structure estimated for *C. shasta* (60 percent of the variance spatially structured, correlation range 50 m). C, F) The same under the structure estimated for *O. tshawytscha* (33 percent, 13 m). Each colour block is labelled with its range of *n*. Points are the six cross sections of this study (circles, *C. shasta*; triangles, *O. tshawytscha*). An interactive version for other settings is available as the sampling design tool (see Data Accessibility).
 
 # Supporting Information
 
@@ -24,7 +24,7 @@ Molecular Ecology publishes the supplement as Supporting Information with figure
 
 **Figure S2 (A2).** As S1, for the full non-spatial negative binomial GLMM.
 
-**Figure S3 (A3).** Semivariance of the Pearson residuals of the non-spatial negative binomial GLMM for *C. shasta* over distance (km, with the downstream axis shrunk by a factor of 50). Sill 24,200, nugget 9,600, and an estimated range of 50 m; 60.3 percent of the residual variance is spatial.
+**Figure S3 (A3).** Semivariance of the Pearson residuals of the non-spatial negative binomial GLMM for *C. shasta* over distance (km). Sill 24,200, nugget 9,600, and an estimated range of 50 m; 60.3 percent of the residual variance is spatial.
 
 **Figure S4 (A4).** Spatial Pearson residuals of the non-spatial negative binomial GLMM for *C. shasta* plotted in pseudo-space. Red circles are positive residuals, black circles negative, and circle size is proportional to the residual.
 
@@ -34,12 +34,28 @@ Molecular Ecology publishes the supplement as Supporting Information with figure
 
 **Figure S7 (A7).** Posterior predictive check of the selected *C. shasta* model: the ratio of the observed to the expected empirical cumulative distribution of counts, with its 95 percent interval, from 1,000 posterior simulations.
 
-**Figure S8 and S9 (C1, C2).** Posterior densities of the nominal range (km) and κ of the spatial field of the selected *C. shasta* model.
+**Figure S8.** Simulated probability density of overdispersion from 1,000 samples of the full non-spatial Poisson GLMM for *O. tshawytscha*. The red line is the dispersion of the data.
 
-**Figure S10 and S11 (C3, C4).** Posterior densities of the nominal range (km) and κ of the spatial field of the selected *O. tshawytscha* model.
+**Figure S9.** As Figure S8, for the full non-spatial negative binomial GLMM.
 
-**Figure S12 (D, "Figure 9" in the draft).** Difference in *O. tshawytscha* eDNA concentration (thousands of copies per liter) between paired surface and depth samples at each vertical of the six cross sections, with the percentage of pairs at each site in which the surface sample was higher.
+**Figure S10.** Semivariance of the Pearson residuals of the non-spatial negative binomial GLMM for *O. tshawytscha* over distance (km). Sill 165, nugget 110, range about 30 m; 33.3 percent of the residual variance is spatially structured.
 
-**Figure S13 (D, "Figure 11" in the draft).** *C. shasta* eDNA concentration on cross sections one and three, with a two-dimensional tensor spline surface (R package mgcv) showing the cline at site three. Points are site-scaled measured concentrations; the thick black line is the river bottom.
+**Figure S11.** Spatial Pearson residuals of the non-spatial negative binomial GLMM for *O. tshawytscha* in pseudo-space. Symbols as in Figure S4.
+
+**Figure S12.** Semivariance of the Pearson residuals of the full spatial negative binomial GLMM for *O. tshawytscha*. The pattern is little changed from Figure S10.
+
+**Figure S13.** Standardized residuals of the selected *O. tshawytscha* model against fitted values.
+
+**Figure S14.** Posterior predictive check of the selected *O. tshawytscha* model, as in Figure S7.
+
+**Figure S15.** Mesh of the spatial random fields of both species: (A) the whole mesh, with axes not to the same scale, and (B) the mesh at cross section one. Red circles are sample locations. Axes are in the grid units of the models.
+
+**Figures S16 and S17 (C1, C2).** Posterior densities of the nominal range (km) and κ of the spatial field of the selected *C. shasta* model.
+
+**Figures S18 and S19 (C3, C4).** Posterior densities of the nominal range (km) and κ of the spatial field of the selected *O. tshawytscha* model.
+
+**Figure S20 (D, "Figure 9" in the draft).** Difference in *O. tshawytscha* eDNA concentration (thousands of copies per liter) between paired surface and depth samples at each vertical of the six cross sections, with the percentage of pairs at each site in which the surface sample was higher.
+
+**Figure S21 (D, "Figure 11" in the draft).** *C. shasta* eDNA concentration on cross sections one and three, with a two-dimensional tensor spline surface (R package mgcv) showing the cline at site three. Points are site-scaled measured concentrations; the thick black line is the river bottom.
 
 Appendix B of the draft (limit of detection and quantification, Figures B1 to B6) comes from a separate analysis of the standard curves and is not produced by this code.

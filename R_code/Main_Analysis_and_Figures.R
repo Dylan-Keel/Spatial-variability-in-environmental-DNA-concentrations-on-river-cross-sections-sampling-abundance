@@ -130,6 +130,16 @@ utm <- data.frame(spTransform(xy, CRS("+proj=utm +zone=10 +datum=WGS84 +units=km
 names(utm) <- c("Sample.ID", "Xkm", "Ykm", "drop")
 CSD2 <- merge(CSD2, utm)
 
+## One mesh for the spatial random fields of both species. Triangles are about
+## 5 m across on and within 10 m of each cross section, so that the fields can
+## represent structure within a section, and coarse between sections.
+Loc <- cbind(utm$Xkm, utm$Ykm)
+mesh.lattice <- do.call(rbind, lapply(split(as.data.frame(Loc), CSD2$Site), function(g)
+  as.matrix(expand.grid(seq(min(g[, 1]) - 0.010, max(g[, 1]) + 0.010, by = 0.005),
+                        seq(min(g[, 2]) - 0.010, max(g[, 2]) + 0.010, by = 0.005)))))
+mesh <- inla.mesh.2d(loc = rbind(Loc, unname(mesh.lattice)), max.edge = c(3, 3), cutoff = 0.0025, offset = c(1, 10))
+mesh$n
+
 ## Site summaries reported in the text
 site.summary <- CSD2 %>% group_by(Site) %>%
   summarise(n = n(),
@@ -255,23 +265,17 @@ c(data = dc.pois.cs$data, model = mean(dc.pois.cs$model), P.overdispersed = mean
 c(data = dc.nbn.cs$data,  model = mean(dc.nbn.cs$model),  P.overdispersed = mean(dc.nbn.cs$data > dc.nbn.cs$model))
 
 ## Spatial structure in the Pearson residuals of the negative binomial model.
-## The downstream coordinate is divided by 50 so that between-site distances do
-## not dominate within-site distances; the semivariogram is cut off at 60 m to
-## show autocorrelation at the scale of a cross section (Figures S3 and S4).
+## The semivariogram is cut off at 60 m to show autocorrelation at the scale of
+## a cross section (Figures S3 and S4).
 resid.nbn.cs <- pearson.resid(y.cs, nonspat.nbn.cs$summary.fitted.values[, "mean"])
-V.nbn.cs <- resid.variogram(resid.nbn.cs, utm$Xkm / 50, utm$Ykm, cutoff = 0.06)
+V.nbn.cs <- resid.variogram(resid.nbn.cs, utm$Xkm, utm$Ykm, cutoff = 0.06)
 nugget.cs <- 9600; sill.cs <- 24200; range.cs <- 0.05   # read from the semivariogram (Figure S3)
 spatial.proportion.cs <- 1 - nugget.cs / sill.cs            # 60.3 percent of the residual variance is spatial
 
 ## Mesh and SPDE for the spatial random field. The prior range is the
 ## semivariogram range (50 m).
-Loc.cs <- cbind(utm$Xkm / 50, utm$Ykm)
+Loc.cs <- Loc; mesh.cs <- mesh
 RangeGuess.cs <- 0.05
-Hull.cs <- inla.nonconvex.hull(Loc.cs, convex = -0.085)
-MaxEdge.cs <- RangeGuess.cs / 6
-mesh.cs <- inla.mesh.2d(boundary = Hull.cs, max.edge = c(0.01, 10000) * MaxEdge.cs, cutoff = MaxEdge.cs, max.n = 1500)
-mesh.cs$n
-plot(mesh.cs, asp = 1, main = "C. shasta mesh"); points(Loc.cs, col = 2, pch = 1, cex = 1)
 A.cs <- inla.spde.make.A(mesh.cs, loc = Loc.cs)
 spde.cs <- inla.spde2.pcmatern(mesh.cs, prior.range = c(RangeGuess.cs, 0.05), prior.sigma = c(1, 0.05))
 w.index.cs <- inla.spde.make.index("w", n.spde = spde.cs$n.spde)
@@ -379,7 +383,7 @@ c(Kappa = Kappa.cs, Range = Range.cs, Sigma_u = Sigma_u.cs, matern.at.cs)
 
 #### 3. O. tshawytscha GLMMs ####
 
-## Same workflow as for C. shasta. Distances are not rescaled, the prior range
+## Same workflow and mesh as for C. shasta. The prior range
 ## is smaller, and the random effect of site has a penalized complexity prior.
 CSD2$Copies <- y.ot
 pcprior <- list(theta = list(prior = "pc.prec", param = c(1, 0.01)))
@@ -401,13 +405,8 @@ nugget.ot <- 110; sill.ot <- 165; range.ot <- 0.03
 spatial.proportion.ot <- 1 - nugget.ot / sill.ot            # 33.3 percent
 
 ## Mesh and SPDE
-Loc.ot <- cbind(utm$Xkm, utm$Ykm)
+Loc.ot <- Loc; mesh.ot <- mesh
 RangeGuess.ot <- 0.03
-Hull.ot <- inla.nonconvex.hull(Loc.ot, convex = -0.085)
-MaxEdge.ot <- RangeGuess.ot / 6
-mesh.ot <- inla.mesh.2d(boundary = Hull.ot, max.edge = c(0.01, 10000) * MaxEdge.ot, cutoff = MaxEdge.ot, max.n = 1500)
-mesh.ot$n
-plot(mesh.ot, asp = 1, main = "O. tshawytscha mesh"); points(Loc.ot, col = 2, pch = 1, cex = 1)
 A.ot <- inla.spde.make.A(mesh.ot, loc = Loc.ot)
 spde.ot <- inla.spde2.pcmatern(mesh.ot, prior.range = c(RangeGuess.ot / 10, 0.005), prior.sigma = c(.1, .05))
 w.index.ot <- inla.spde.make.index("w", n.spde = spde.ot$n.spde)
@@ -737,15 +736,16 @@ curves5 <- site.stats %>% rowwise() %>% do({
 ref.lines <- data.frame(CV = c(0.1, 0.2, 0.3), label = sprintf("CV[target] == '%.1f'", c(0.1, 0.2, 0.3)))
 fig5 <- ggplot(curves5, aes(x = n, y = CV, colour = Site, linetype = design)) +
   geom_hline(data = ref.lines, aes(yintercept = CV), colour = "grey50", linetype = "dashed", linewidth = 0.5) +
-  geom_text(data = ref.lines, aes(x = 60, y = CV + 0.025, label = label), inherit.aes = FALSE, hjust = 1, size = 3, colour = "grey30", parse = TRUE) +
   geom_line(linewidth = 0.8) +
+  geom_label(data = ref.lines, aes(x = 60, y = CV, label = label), inherit.aes = FALSE, hjust = 1, vjust = -0.15, size = 3, colour = "grey20",
+             fill = "white", alpha = 0.85, label.size = 0, label.padding = unit(0.08, "lines"), parse = TRUE) +
   facet_wrap(~species, ncol = 1, scales = "free_y", labeller = sp_lab) +
   scale_colour_manual(values = COL_SITES, name = "Site") +
   scale_linetype_manual(values = c("Simple random" = "solid", "Spatially stratified" = "22"), name = "Sample placement",
                         labels = c(expression("Simple random, independence (" * n[ind] * ")"), expression("Spatially stratified (" * n[strat] * ")"))) +
   scale_x_continuous(limits = c(1, 60), breaks = seq(0, 60, 10), expand = expansion(mult = c(0, 0.02))) +
   scale_y_continuous(expand = expansion(mult = c(0, 0.05)), limits = c(0, NA)) +
-  labs(x = "Number of 1-L samples (n)", y = "Precision of the section mean (CV of the estimated mean)") +
+  labs(x = "Number of 1-L samples (n)", y = "CV of the estimated mean") +
   guides(colour = guide_legend(order = 1, nrow = 1), linetype = guide_legend(order = 2))
 save_fig(fig5, "Figure_5", w = FIG_W2, h = 7.5)
 
@@ -854,25 +854,22 @@ save_fig(semivariogram(as.data.frame(V.full.ot), c(0, 220), colour = COL_OT), "F
 save_fig(ggplot_inla_residuals2(Chin.inla.d, y.ot, CI = TRUE, method = NA) + theme_ms() + theme(plot.margin = margin(5.5, 16, 5.5, 5.5)), "Figure_S13", w = FIG_W15, h = 4.5, dir = supp)
 save_fig(plot(ds.d.ot) + theme_ms(), "Figure_S14", w = FIG_W15, h = 4.5, dir = supp)
 
-## Figure S15: the meshes of the spatial random fields at cross section one,
-## on the straightened-river grid of the models (downstream distance against
-## distance from the left bank). The downstream axis of the C. shasta mesh is
-## divided by 50, as in the model.
-mesh.plot <- function(mesh, loc, title, xlab) {
+## Figure S15: the mesh of the spatial random fields, whole (A; axes not to
+## the same scale) and at cross section one (B), on the straightened-river grid
+## of the models (downstream distance against distance from the left bank).
+mesh.plot <- function(mesh, loc, title, xlab, whole = FALSE) {
   tv <- mesh$graph$tv; xy <- mesh$loc[, 1:2]
   ed <- unique(t(apply(rbind(tv[, 1:2], tv[, 2:3], tv[, c(3, 1)]), 1, sort)))
   seg <- data.frame(x = xy[ed[, 1], 1], y = xy[ed[, 1], 2], xend = xy[ed[, 2], 1], yend = xy[ed[, 2], 2])
   s1 <- loc[CSD2$Site == 1, , drop = FALSE]; pad <- 0.6 * max(diff(range(s1[, 1])), diff(range(s1[, 2])))
   ggplot() + geom_segment(data = seg, aes(x = x, y = y, xend = xend, yend = yend), colour = "grey45", linewidth = 0.2) +
     geom_point(data = data.frame(x = loc[, 1], y = loc[, 2]), aes(x = x, y = y), colour = "red", shape = 1, size = 1.4) +
-    coord_fixed(xlim = range(s1[, 1]) + c(-pad, pad), ylim = range(s1[, 2]) + c(-pad, pad)) +
-    scale_x_continuous(breaks = scales::breaks_pretty(3)) + scale_y_continuous(breaks = scales::breaks_pretty(3)) +
-    labs(x = xlab, y = "Distance from left bank (grid km)", subtitle = title) + theme_ms(10)
+    (if (whole) coord_cartesian() else coord_fixed(xlim = range(s1[, 1]) + c(-pad, pad), ylim = range(s1[, 2]) + c(-pad, pad))) +
+    scale_x_continuous(breaks = scales::breaks_pretty(if (whole) 3 else 2)) + scale_y_continuous(breaks = scales::breaks_pretty(3)) +
+    labs(x = xlab, y = "Distance from left bank (grid km)", subtitle = title) + theme_ms(10) + theme(plot.margin = margin(5.5, 14, 5.5, 5.5))
 }
-c(mesh.nodes.cs = mesh.cs$n, mesh.nodes.ot = mesh.ot$n, max.edge.cs.m = MaxEdge.cs * 0.01 * 1000, max.edge.ot.m = MaxEdge.ot * 0.01 * 1000,
-  cutoff.cs.m = MaxEdge.cs * 1000, cutoff.ot.m = MaxEdge.ot * 1000)
-figmesh <- ggarrange(mesh.plot(mesh.cs, Loc.cs, expression(bold("A) ") * bolditalic("C. shasta")), "Downstream distance / 50 (grid km)"),
-                     mesh.plot(mesh.ot, Loc.ot, expression(bold("B) ") * bolditalic("O. tshawytscha")), "Downstream distance (grid km)"), ncol = 2)
+figmesh <- ggarrange(mesh.plot(mesh, Loc, expression(bold("A)  Whole mesh")), "Downstream distance (grid km)", whole = TRUE),
+                     mesh.plot(mesh, Loc, expression(bold("B)  Cross section one")), "Downstream distance (grid km)"), ncol = 2)
 save_fig(figmesh, "Figure_S15", w = FIG_W2, h = 3.8, dir = supp)
 
 ## Figures S16-S19: posterior densities of range and kappa for the selected models
@@ -934,7 +931,7 @@ save(CSD2, utm, site.summary, site.stats, long, scale.par,
 ## tracked in git.
 save(nonspat.cs, nonspat.nbn.cs, spat.full.cs, Cs.inla.null,
      nonspat.ot, nonspat.nbn.ot, spat.full.ot, Chin.inla.d, Chin.inla.t, Chin.inla.null, Chin.inla.top,
-     mesh.cs, mesh.ot, spde.cs, spde.ot, stack.cs, stack.ot, stack2.ot, Loc.cs, Loc.ot,
+     mesh, mesh.cs, mesh.ot, spde.cs, spde.ot, stack.cs, stack.ot, stack2.ot, Loc.cs, Loc.ot,
      resid.full.cs, resid.null.cs, resid.full.ot, resid.d.ot,
      file = "../results/model_fits.rda")
 writeLines(capture.output(sessionInfo()), "../results/sessionInfo.txt")
