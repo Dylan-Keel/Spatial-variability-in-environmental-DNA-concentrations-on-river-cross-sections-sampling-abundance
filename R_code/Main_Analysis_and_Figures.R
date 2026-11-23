@@ -507,12 +507,10 @@ n.required %>% filter(CV == 0.2) %>% summarise(across(c(n.cs, n.ot), list(min = 
 ## Evenly spaced (spatially stratified) samples give higher precision than
 ## random placement when the field is autocorrelated. The gain depends on the
 ## spatial proportion of variance (p, from the semivariogram) and on the
-## correlation range relative to the section width. C. shasta uses the
-## semivariogram range (50 m), since its fitted field range reflects the
-## between-site scale; O. tshawytscha uses the range of its fitted field.
-range.ot.m <- sqrt(8) / Kappa.ot * 1000
+## correlation range relative to the section width. Both are taken from the
+## semivariograms of the non-spatial models (ranges of 50 m and 30 m).
 species.par <- list("C. shasta"      = list(p = spatial.proportion.cs, range_m = range.cs * 1000),
-                    "O. tshawytscha" = list(p = spatial.proportion.ot, range_m = range.ot.m))
+                    "O. tshawytscha" = list(p = spatial.proportion.ot, range_m = range.ot * 1000))
 matern.tab <- lapply(species.par, function(s) matern_tables(s$range_m))
 
 ## Samples needed under spatially stratified placement, for the same sites and
